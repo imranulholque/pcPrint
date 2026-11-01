@@ -10,7 +10,7 @@
 *{box-sizing:border-box}[hidden]{display:none!important}
 html,body{height:100%}
 body{margin:0;font:14px system-ui,"Segoe UI",sans-serif;background:var(--bg);color:var(--tx);display:flex;flex-direction:column;overflow:hidden}
-button,select,input[type=number],.btn{font:inherit;border-radius:9px;border:1px solid var(--bd);background:var(--card);color:var(--tx);padding:7px 12px;cursor:pointer}
+button,select,input[type=number],input[type=text],.btn{font:inherit;border-radius:9px;border:1px solid var(--bd);background:var(--card);color:var(--tx);padding:7px 12px;cursor:pointer}
 button:hover:not(:disabled){border-color:var(--pri)}
 button.p{background:var(--pri);color:#fff;border-color:var(--pri);font-weight:600}
 button.p:hover:not(:disabled){filter:brightness(1.1)}
@@ -66,6 +66,17 @@ body.s1 .s2only,body.s2 .s1only{display:none!important}
 .fcard .row{gap:5px;margin-top:6px}
 .fcard .num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:11px;background:var(--pri);color:#fff;font-size:12px;font-weight:700;margin-right:6px}
 .selbox .cnt{font-size:15px;font-weight:700}
+.selbox input[type=text]{padding:6px 9px;min-width:0}
+.thg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 12px}
+.tn{position:relative;height:118px;border:2px solid var(--bd);border-radius:8px;background:rgba(127,127,127,.12);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden}
+.tn:hover{border-color:var(--pri)}
+.tn img{max-width:100%;max-height:100%;object-fit:contain;background:#fff}
+.tn.off img{opacity:.35}
+.tn.cur{border-color:var(--pri);box-shadow:0 0 0 2px var(--pri)}
+.tn .tb{position:absolute;left:4px;top:4px;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--pri);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.tn.off .tb{background:#6b7280}
+.tn input{position:absolute;right:4px;top:4px;width:18px;height:18px;margin:0;cursor:pointer}
+.fdet summary{cursor:pointer;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);margin:4px 0 8px;font-weight:600}
 
 /* ---------- step 2: preview + status ---------- */
 .pvstage{flex:1;min-height:0;overflow:auto;padding:14px}
@@ -141,10 +152,14 @@ body.s1 .s2only,body.s2 .s1only{display:none!important}
       <h3>Pages to print</h3>
       <div class="row"><span class="cnt grow" id="scount"></span>
         <button id="sall" class="s">All</button><button id="snone" class="s">None</button></div>
-      <p class="mut">Tick “Print” above each page to include or skip it.</p>
+      <div class="row" style="margin-top:8px;flex-wrap:nowrap">
+        <input id="prange" type="text" class="grow" autocomplete="off" spellcheck="false" placeholder="e.g. 1-5, 8, 10-12">
+        <button id="bapply" class="s p">Apply</button>
+      </div>
+      <p class="mut">Type pages and press Enter, or tick the small pages below. Click a small page to jump to it.</p>
     </div>
-    <h3>Files</h3>
-    <div id="flist"></div>
+    <div id="thumbs" class="thg"></div>
+    <details class="fdet"><summary id="fsum">Files</summary><div id="flist"></div></details>
   </aside>
 
   <!-- side panel, step 2 -->
@@ -237,10 +252,42 @@ function allPages(){
   return out;
 }
 const selPages=()=>allPages().filter(p=>!DESEL.has(key(p.f,p.p)));
-function updateCount(){
-  const a=allPages().length,s=selPages().length;
-  $('#scount').textContent=`${s} of ${a} selected`;
+function compress(nums){
+  const out=[];let i=0;
+  while(i<nums.length){let j=i;while(j+1<nums.length&&nums[j+1]===nums[j]+1)j++;
+    out.push(j>i?(j>i+1?`${nums[i]}-${nums[j]}`:`${nums[i]}, ${nums[j]}`):`${nums[i]}`);i=j+1}
+  return out.join(', ');
 }
+function updateCount(){
+  const all=allPages(),sel=all.filter(p=>!DESEL.has(key(p.f,p.p)));
+  $('#scount').textContent=`${sel.length} of ${all.length} selected`;
+  const r=$('#prange');
+  r.placeholder=sel.length===0&&all.length?'None selected':'All pages · e.g. 1-5, 8, 10-12';
+  if(document.activeElement!==r)r.value=sel.length===all.length||!sel.length?'':compress(sel.map(p=>p.n));
+}
+function parseRange(t){
+  const total=allPages().length,out=new Set(),bad=[];let over=false;
+  t.replace(/\s*[-–—:]\s*/g,'-').split(/[,;\s]+/).filter(Boolean).forEach(tok=>{
+    const m=tok.match(/^(\d+)(?:-(\d+))?$/);
+    if(!m){bad.push(tok);return}
+    let a=+m[1],b=m[2]?+m[2]:a;if(a>b)[a,b]=[b,a];
+    if(b>total||a<1)over=true;
+    for(let i=Math.max(1,a);i<=Math.min(b,total);i++)out.add(i);
+  });
+  return {out,bad,over,total};
+}
+function applyRange(){
+  const t=$('#prange').value.trim();
+  if(!t){selectAll(true);return}
+  const r=parseRange(t);
+  if(r.bad.length)return toast('Cannot read: '+r.bad.join(', ')+'\nUse a format like 1-5, 8, 10-12');
+  if(!r.out.size)return toast(`No such page. This document has ${r.total} page${r.total>1?'s':''}.`);
+  allPages().forEach(p=>setSel(key(p.f,p.p),r.out.has(p.n)));
+  if(r.over)toast(`Pages beyond ${r.total} were ignored`);
+  $('#prange').blur();updateCount();
+}
+$('#bapply').onclick=applyRange;
+$('#prange').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();applyRange()}});
 function jobTitle(list){
   const names=[...new Set(list.map(p=>p.name))];
   return names[0]+(names.length>1?' +'+(names.length-1):'');
@@ -272,6 +319,7 @@ function printOnly(id){
 function renderFiles(){
   const L=$('#flist');L.innerHTML='';
   $('#empty').hidden=FILES.length>0;
+  $('#fsum').textContent=`Files (${FILES.length}) · reorder / remove`;
   FILES.forEach((f,i)=>{
     const meta=f.kind==='pdf'?`PDF · ${f.pages} page${f.pages>1?'s':''}`:'Image';
     const pr=el('button',{className:'s',textContent:'🖨 Only this',title:'Print only this file'});
@@ -325,24 +373,54 @@ $('#rfit').onclick=()=>{
   const ratio=im&&im.naturalWidth?im.naturalHeight/im.naturalWidth:1.414;
   setRZ((P.clientHeight-80)/(baseW()*ratio));
 };
+let ELS={},curK=null,mkT=0;
+function setSel(k,on){
+  on?DESEL.delete(k):DESEL.add(k);
+  const e=ELS[k];if(!e)return;
+  e.cb.checked=on;e.tcb.checked=on;e.rp.classList.toggle('off',!on);e.th.classList.toggle('off',!on);
+}
+function selectAll(on){allPages().forEach(p=>setSel(key(p.f,p.p),on));updateCount()}
+function goPage(rp){
+  const P=$('#pages');
+  P.scrollTo({top:P.scrollTop+rp.getBoundingClientRect().top-P.getBoundingClientRect().top-12,behavior:'smooth'});
+}
+function markCur(){
+  if(STEP!==1)return;
+  const P=$('#pages'),pt=P.getBoundingClientRect().top;let best=null;
+  for(const k in ELS){
+    if(best===null||ELS[k].rp.getBoundingClientRect().top-pt<=P.clientHeight*0.35)best=k;else break;
+  }
+  if(best!==curK){
+    if(curK&&ELS[curK])ELS[curK].th.classList.remove('cur');
+    curK=best;if(best&&ELS[best])ELS[best].th.classList.add('cur');
+  }
+}
+$('#pages').addEventListener('scroll',()=>{if(!mkT)mkT=requestAnimationFrame(()=>{mkT=0;markCur()})},{passive:true});
 function renderPages(){
-  const box=$('#pages');box.innerHTML='';rzQ=qFor(RZ);
+  const box=$('#pages'),tb=$('#thumbs');box.innerHTML='';tb.innerHTML='';ELS={};curK=null;rzQ=qFor(RZ);
   allPages().forEach(p=>{
-    const k=key(p.f,p.p);
-    const cb=el('input',{type:'checkbox',checked:!DESEL.has(k)});
+    const k=key(p.f,p.p),on=!DESEL.has(k);
+    const cb=el('input',{type:'checkbox',checked:on});
     const im=el('img',{loading:'lazy',alt:'',src:viewSrc(p.f,p.p)});im.dataset.f=p.f;im.dataset.p=p.p;
-    const rp=el('div',{className:'rp'+(cb.checked?'':' off')},
+    const rp=el('div',{className:'rp'+(on?'':' off')},
       el('div',{className:'ph'},el('b',{className:'badge',textContent:p.n}),
         el('span',{className:'cap grow',textContent:p.label,title:p.label}),
         el('label',{className:'sel'},cb,'Print')),
       im);
-    cb.onchange=()=>{cb.checked?DESEL.delete(k):DESEL.add(k);rp.classList.toggle('off',!cb.checked);updateCount()};
-    box.append(rp);
+    const tcb=el('input',{type:'checkbox',checked:on,title:'Print this page'});
+    const th=el('div',{className:'tn'+(on?'':' off'),title:p.label},
+      el('img',{loading:'lazy',alt:'',src:`/api/thumb?f=${p.f}&p=${p.p}`}),
+      el('b',{className:'tb',textContent:p.n}),tcb);
+    cb.onchange=()=>{setSel(k,cb.checked);updateCount()};
+    tcb.onchange=()=>{setSel(k,tcb.checked);updateCount()};
+    th.onclick=e=>{if(e.target!==tcb)goPage(rp)};
+    ELS[k]={rp,cb,th,tcb};
+    box.append(rp);tb.append(th);
   });
-  updateCount();
+  updateCount();markCur();
 }
-$('#sall').onclick=()=>{DESEL.clear();renderPages()};
-$('#snone').onclick=()=>{allPages().forEach(p=>DESEL.add(key(p.f,p.p)));renderPages()};
+$('#sall').onclick=()=>selectAll(true);
+$('#snone').onclick=()=>selectAll(false);
 
 /* ---------------- steps ---------------- */
 function go(n){
@@ -354,7 +432,7 @@ function go(n){
   $('#v1').hidden=n!==1;$('#v2').hidden=n!==2;
   $('#sideA').hidden=n!==1;$('#sideB').hidden=n!==2;
   $('#stepname').textContent=n===1?'Step 1 of 2 · Check pages':'Step 2 of 2 · Preview & print';
-  zoomLabel();
+  zoomLabel();if(n===1)markCur();
   if(n===2){msg('');numNote();if(!CAPS||CAPS.error)loadPrinters();else pvRender()}
 }
 $('#bopen').onclick=()=>go(2);
