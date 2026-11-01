@@ -10,6 +10,56 @@ import server
 MUTEX = None   # keeps the "one window only" lock alive
 EXTS = (".pdf", ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif", ".tif", ".tiff")
 win = None
+tray = None
+QUIT = {"v": False}
+
+
+def tray_image():
+    """Small icon for the system tray."""
+    from PIL import Image, ImageDraw
+    img = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    d.rounded_rectangle((0, 0, 63, 63), radius=14, fill=(37, 99, 235))
+    d.rectangle((20, 10, 44, 26), fill="white")
+    d.rounded_rectangle((12, 24, 52, 46), radius=4, fill="white")
+    d.rectangle((20, 38, 44, 54), fill="white", outline=(37, 99, 235), width=2)
+    d.rectangle((24, 43, 40, 45), fill=(37, 99, 235))
+    return img
+
+
+def front():
+    """Show the window (also when it is hidden in the tray) and bring it to the front."""
+    try:
+        win.show()
+        win.restore()
+        win.on_top = True
+        win.on_top = False
+    except Exception:
+        pass
+
+
+def quit_app(*a):
+    QUIT["v"] = True
+    try:
+        win.destroy()
+    except Exception:
+        pass
+
+
+def start_tray():
+    """System tray icon: click = open, menu = Open / Quit. Returns True if it worked."""
+    global tray
+    try:
+        import pystray
+        import pystray._win32  # noqa: makes PyInstaller bundle the Windows backend
+        menu = pystray.Menu(pystray.MenuItem("Open PC Print", lambda icon, item: front(), default=True),
+                            pystray.MenuItem("Quit", lambda icon, item: quit_app()))
+        tray = pystray.Icon("PCPrint", tray_image(), "PC Print", menu)
+        tray.run_detached()
+        return True
+    except Exception:
+        tray = None
+        return False
 
 
 def argv_paths():
@@ -189,8 +239,20 @@ def main():
 
     import webview
     global win
+    tray_ok = start_tray()
     win = webview.create_window("PC Print", f"http://127.0.0.1:{port}/", width=1120, height=820,
-                                min_size=(720, 520), minimized=startup)
+                                min_size=(720, 520),
+                                hidden=startup and tray_ok,        # started by Windows: only the tray icon
+                                minimized=startup and not tray_ok)
+
+    def on_closing(*a):
+        # with "Start with Windows" on, the X button hides the window to the tray
+        if not QUIT["v"] and tray and autostart_get():
+            win.hide()
+            return False
+        return True
+
+    win.events.closing += on_closing
 
     def pick():
         kind = webview.FileDialog.OPEN if hasattr(webview, "FileDialog") else webview.OPEN_DIALOG
@@ -199,20 +261,17 @@ def main():
             file_types=("PDF and images (*.pdf;*.jpg;*.jpeg;*.png;*.webp;*.bmp;*.gif;*.tif;*.tiff)",))
         return list(r or [])
 
-    def front():
-        try:
-            win.restore()
-            win.on_top = True
-            win.on_top = False
-        except Exception:
-            pass
-
     server.HOOKS["pick"] = pick
     server.HOOKS["front"] = front
     if getattr(sys, "frozen", False):
         server.HOOKS["autostart_get"] = autostart_get
         server.HOOKS["autostart_set"] = autostart_set
     webview.start()
+    if tray:
+        try:
+            tray.stop()
+        except Exception:
+            pass
     try:
         srv.shutdown()
     except Exception:
