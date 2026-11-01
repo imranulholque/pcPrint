@@ -14,7 +14,7 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install -r requirements.txt
-      - run: pyinstaller --noconfirm --onefile --windowed --name PCPrint --add-data "static;static" --collect-all webview app.py
+      - run: pyinstaller --noconfirm --onefile --windowed --name PCPrint --add-data "static;static" --collect-all webview --hidden-import win32com.client app.py
       - uses: actions/upload-artifact@v4
         with:
           name: PCPrint
