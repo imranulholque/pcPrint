@@ -1,0 +1,6 @@
+flask
+pillow
+pymupdf==1.24.14
+pywin32
+pywebview
+pyinstaller
