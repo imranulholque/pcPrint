@@ -181,6 +181,7 @@ def main():
         srv.shutdown()
     except Exception:
         pass
+    server.cleanup()
 
 
 if __name__ == "__main__":
