@@ -41,6 +41,8 @@ select:disabled{opacity:.5}
 .pvsheet{flex:1;min-width:0;max-width:420px;text-align:center}
 .pvsheet img{width:100%;display:block;border-radius:4px;box-shadow:0 2px 12px rgba(0,0,0,.35);background:#fff;min-height:120px}
 .lg{display:inline-block;width:12px;height:12px;vertical-align:-1px;margin-right:4px;border-radius:2px}
+#drop{position:fixed;inset:0;z-index:40;background:rgba(37,99,235,.18);display:flex;align-items:center;justify-content:center;pointer-events:none}
+#drop div{border:3px dashed var(--pri);background:var(--card);border-radius:18px;padding:36px 54px;font-size:22px;font-weight:600;text-align:center}
 #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#111;color:#fff;padding:10px 16px;border-radius:10px;z-index:30;max-width:80%;white-space:pre-line}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 </style>
@@ -49,6 +51,7 @@ select:disabled{opacity:.5}
 <div id="bar"><div class="in row">
   <h1>🖨 PC Print</h1>
   <button id="add" class="p">＋ Add files</button>
+  <button id="bpaste" title="Paste copied files or a copied picture (Ctrl+V)">📋 Paste</button>
   <button id="bnum">🔢 Page numbers</button>
   <span class="grow"></span>
   <button id="bopen" class="p">🖨 Print all (Ctrl+P)</button>
@@ -77,7 +80,7 @@ select:disabled{opacity:.5}
   <div id="flist"></div>
   <div id="empty" class="empty" hidden>
     <div class="big">No file open</div>
-    <div class="mut">PDF and images only. You can also right-click a file → Open with → PC Print.</div>
+    <div class="mut">PDF and images only. Drag files here, press Ctrl+V to paste, or right-click a file → Open with → PC Print.</div>
     <button id="add2" class="p">Choose files</button>
   </div>
   <div id="pages"></div>
@@ -154,6 +157,7 @@ select:disabled{opacity:.5}
     <p class="mut" id="pvinfo"></p>
   </div>
 </div>
+<div id="drop" hidden><div>⬇ Drop files here<br><span class="mut">PDF or images</span></div></div>
 <div id="toast" hidden></div>
 
 <script>
@@ -214,6 +218,46 @@ function renderPages(){
       el('div',{className:'mut',textContent:f.name+(f.pages>1?` · page ${p+1}`:'')})));
   }});
 }
+
+/* ---------------- drag & drop, paste ---------------- */
+function busy(){return !$('#dlg').hidden||!$('#pv').hidden}
+async function uploadFiles(list){
+  const files=[...list];if(!files.length)return;
+  if(busy())return toast('Close the print window first');
+  const fd=new FormData();files.forEach(f=>fd.append('file',f,f.name));
+  toast(`Adding ${files.length} file${files.length>1?'s':''}…`);
+  try{
+    const j=await (await api('/api/upload',{method:'POST',body:fd})).json();
+    if(j.added)toast(`Added ${j.added} file${j.added>1?'s':''}`);
+  }catch(e){toast('Could not add the files')}
+  refresh(true);
+}
+async function pasteClipboard(){
+  if(busy())return toast('Close the print window first');
+  try{
+    const j=await (await api('/api/paste',{method:'POST'})).json();
+    if(j.added)toast(`Added ${j.added} file${j.added>1?'s':''}`);
+    else if(j.errors&&j.errors.length)toast(j.errors.join('\n'));
+  }catch(e){toast('Could not paste')}
+  refresh(true);
+}
+$('#bpaste').onclick=pasteClipboard;
+let dragN=0;
+const hasFiles=e=>e.dataTransfer&&[...e.dataTransfer.types].includes('Files');
+window.addEventListener('dragenter',e=>{if(!hasFiles(e))return;e.preventDefault();dragN++;$('#drop').hidden=false});
+window.addEventListener('dragover',e=>{if(!hasFiles(e))return;e.preventDefault();e.dataTransfer.dropEffect='copy'});
+window.addEventListener('dragleave',e=>{if(!hasFiles(e))return;dragN=Math.max(0,dragN-1);if(!dragN)$('#drop').hidden=true});
+window.addEventListener('drop',e=>{
+  if(!hasFiles(e))return;
+  e.preventDefault();dragN=0;$('#drop').hidden=true;
+  uploadFiles(e.dataTransfer.files);
+});
+document.addEventListener('paste',e=>{
+  const t=e.target;if(t&&/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)&&t.type!=='checkbox')return;
+  e.preventDefault();
+  const fl=e.clipboardData&&e.clipboardData.files;
+  if(fl&&fl.length)uploadFiles(fl);else pasteClipboard();
+});
 
 /* ---------------- page numbers ---------------- */
 async function loadSettings(){
