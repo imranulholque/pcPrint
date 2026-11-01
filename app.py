@@ -61,6 +61,33 @@ def forward(paths):
     return False
 
 
+RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
+RUN_NAME = "PCPrint"
+
+
+def autostart_get():
+    try:
+        import winreg
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, RUN_KEY) as k:
+            winreg.QueryValueEx(k, RUN_NAME)
+            return True
+    except Exception:
+        return False
+
+
+def autostart_set(on):
+    """Start with Windows (current user only, no admin needed). Launched with --startup."""
+    import winreg
+    with winreg.CreateKey(winreg.HKEY_CURRENT_USER, RUN_KEY) as k:
+        if on:
+            winreg.SetValueEx(k, RUN_NAME, 0, winreg.REG_SZ, f'"{sys.executable}" --startup')
+        else:
+            try:
+                winreg.DeleteValue(k, RUN_NAME)
+            except FileNotFoundError:
+                pass
+
+
 def make_send_to():
     """'Send to > PC Print' for many files at once (Windows then starts the app one time)."""
     try:
@@ -120,6 +147,10 @@ def unregister_open_with():
         os.remove(os.path.join(os.environ["APPDATA"], "Microsoft", "Windows", "SendTo", "PC Print.lnk"))
     except Exception:
         pass
+    try:
+        autostart_set(False)
+    except Exception:
+        pass
     kill(r"Software\Classes\Applications" + "\\" + name)
     for ext in EXTS:
         kill(r"Software\Classes" + "\\" + ext + r"\OpenWithList" + "\\" + name)
@@ -131,8 +162,10 @@ def main():
         return
     paths = argv_paths()
 
+    startup = "--startup" in sys.argv   # started by Windows: open minimized
     if not is_primary():
-        forward(paths)
+        if not startup:
+            forward(paths)
         return
 
     srv = make_server("127.0.0.1", 0, server.app, threaded=True)   # free port, only this PC
@@ -157,7 +190,7 @@ def main():
     import webview
     global win
     win = webview.create_window("PC Print", f"http://127.0.0.1:{port}/", width=1120, height=820,
-                                min_size=(720, 520))
+                                min_size=(720, 520), minimized=startup)
 
     def pick():
         kind = webview.FileDialog.OPEN if hasattr(webview, "FileDialog") else webview.OPEN_DIALOG
@@ -176,6 +209,9 @@ def main():
 
     server.HOOKS["pick"] = pick
     server.HOOKS["front"] = front
+    if getattr(sys, "frozen", False):
+        server.HOOKS["autostart_get"] = autostart_get
+        server.HOOKS["autostart_set"] = autostart_set
     webview.start()
     try:
         srv.shutdown()
