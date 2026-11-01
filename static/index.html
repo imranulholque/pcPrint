@@ -54,6 +54,7 @@ select:disabled{opacity:.5}
   <button id="bpaste" title="Paste copied files or a copied picture (Ctrl+V)">📋 Paste</button>
   <button id="bnum">🔢 Page numbers</button>
   <span class="grow"></span>
+  <label id="autolbl" class="row mut" hidden title="Open PC Print minimized when Windows starts"><input type="checkbox" id="auto"> Start with Windows</label>
   <button id="bopen" class="p">🖨 Print all (Ctrl+P)</button>
 </div></div>
 
@@ -498,7 +499,22 @@ async function poll(id){
   else msg('Error: '+j.error);
 }
 
-(async()=>{await loadSettings();await refresh(true);setInterval(refresh,1200)})();
+async function initAuto(){
+  try{
+    const j=await (await api('/api/autostart')).json();
+    if(!j.available)return;
+    $('#autolbl').hidden=false;$('#auto').checked=j.on;
+  }catch{}
+}
+$('#auto').onchange=async()=>{
+  const on=$('#auto').checked;
+  try{
+    const r=await api('/api/autostart',{method:'POST',headers:JH,body:JSON.stringify({on})});
+    const j=await r.json();
+    if(!r.ok){$('#auto').checked=!on;toast(j.error||'Could not change it')}
+  }catch{$('#auto').checked=!on;toast('Could not change it')}
+};
+(async()=>{initAuto();await loadSettings();await refresh(true);setInterval(refresh,1200)})();
 </script>
 </body>
 </html>
