@@ -19,7 +19,7 @@ SLOCK = threading.Lock()   # file list changes
 REV = {"n": 0}
 NOTICE = {"t": ""}
 BATCH = {"t": 0.0, "ids": []}
-HOOKS = {"pick": None, "front": None}   # set by app.py (file dialog, bring window to front)
+HOOKS = {"pick": None, "front": None, "autostart_get": None, "autostart_set": None}   # set by app.py (file dialog, bring window to front)
 IMG_EXT = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif", ".tif", ".tiff"}
 SCALES = ("fit", "actual", "fill", "custom")
 
@@ -214,6 +214,25 @@ def paste():
         added, errors = register([path], sort=True)
         return jsonify(added=added, errors=errors)
     return jsonify(added=0, errors=["The clipboard has no file or picture"])
+
+
+@app.get("/api/autostart")
+def autostart_get():
+    h = HOOKS.get("autostart_get")
+    return jsonify(available=bool(h), on=bool(h()) if h else False)
+
+
+@app.post("/api/autostart")
+def autostart_set():
+    h = HOOKS.get("autostart_set")
+    if not h:
+        return jsonify(error="Not available"), 400
+    on = bool((request.get_json(silent=True) or {}).get("on"))
+    try:
+        h(on)
+    except Exception as e:
+        return jsonify(error=str(e)), 500
+    return jsonify(on=on)
 
 
 @app.get("/api/state")
