@@ -243,17 +243,25 @@ def numspec(args, fid, p):
         start = int(float(args.get("nstart", 1)))
     except Exception:
         start = 1
-    n = gnum(fid, p)
+    try:
+        margin = max(2.0, min(40.0, float(args.get("nmargin", 8))))
+    except Exception:
+        margin = 8.0
+    bold = str(args.get("nbold")) in ("1", "true", "True")
+    n = gnum(fid, p)   # position in the whole document, so one file keeps its serial number
     if n is None:
         return None
-    return {"text": str(start - 1 + n), "pos": pos, "align": align, "size": size}
+    return {"text": str(start - 1 + n), "pos": pos, "align": align, "size": size,
+            "margin": margin, "bold": bold}
 
 
-@functools.lru_cache(maxsize=32)
-def get_font(px):
+@functools.lru_cache(maxsize=64)
+def get_font(px, bold=False):
     win = os.environ.get("WINDIR", r"C:\Windows")
-    for name in (os.path.join(win, "Fonts", "times.ttf"), "times.ttf", "Times New Roman.ttf",
-                 "LiberationSerif-Regular.ttf", "DejaVuSerif.ttf"):
+    names = (["timesbd.ttf", "Times New Roman Bold.ttf", "LiberationSerif-Bold.ttf", "DejaVuSerif-Bold.ttf"]
+             if bold else
+             ["times.ttf", "Times New Roman.ttf", "LiberationSerif-Regular.ttf", "DejaVuSerif.ttf"])
+    for name in [os.path.join(win, "Fonts", names[0])] + names:
         try:
             return ImageFont.truetype(name, max(6, int(px)))
         except Exception:
@@ -265,21 +273,21 @@ def get_font(px):
 
 
 def stamp(img, num, ppmm):
-    """Draw the page number (Times New Roman) on the sheet."""
+    """Print the page number (Times New Roman) directly on the page, at the chosen place."""
     d = ImageDraw.Draw(img)
-    fnt = get_font(num["size"] * 25.4 / 72 * ppmm)
+    fnt = get_font(round(num["size"] * 25.4 / 72 * ppmm), num["bold"])
     text = num["text"]
     l, t, r, b = d.textbbox((0, 0), text, font=fnt)
     tw, th = r - l, b - t
     W, H = img.size
-    pad, mx = int(4 * ppmm), int(10 * ppmm)
+    m = int(num["margin"] * ppmm)
     if num["align"] == "left":
-        x = mx
+        x = m
     elif num["align"] == "right":
-        x = W - mx - tw
+        x = W - m - tw
     else:
         x = (W - tw) // 2
-    y = pad if num["pos"] == "top" else H - pad - th
+    y = m if num["pos"] == "top" else H - m - th
     d.text((x - l, y - t), text, font=fnt, fill=0 if img.mode == "L" else (0, 0, 0))
 
 
@@ -353,18 +361,9 @@ def compose(f, idx, W, H, mono, rotate=True, mode="fit", ppmm=None, pct=100.0):
     return canvas
 
 
-def sheet(f, idx, W, H, mono, mode="fit", ppmm=None, pct=100.0, num=None, reserve=True, rotate=True):
-    """One printed sheet: the page plus the page number. In 'fit' mode room is kept
-    free for the number so it never touches the page content."""
-    band = 0
-    if num and reserve and mode == "fit" and ppmm:
-        band = min(int((num["size"] * 25.4 / 72 + 8) * ppmm), H // 3)
-    if band:
-        inner = compose(f, idx, W, max(1, H - band), mono, rotate, mode, ppmm, pct)
-        canvas = Image.new(inner.mode, (W, H), 255 if inner.mode == "L" else (255, 255, 255))
-        canvas.paste(inner, (0, band if num["pos"] == "top" else 0))
-    else:
-        canvas = compose(f, idx, W, H, mono, rotate, mode, ppmm, pct)
+def sheet(f, idx, W, H, mono, mode="fit", ppmm=None, pct=100.0, num=None, rotate=True):
+    """One printed sheet: the page, with the page number printed directly on it."""
+    canvas = compose(f, idx, W, H, mono, rotate, mode, ppmm, pct)
     if num and ppmm:
         stamp(canvas, num, ppmm)
     return canvas
@@ -435,7 +434,7 @@ def view():
     ppmm = W / wmm
     H = max(100, int(hmm * ppmm))
     num = numspec(request.args, f["id"], p)
-    img = sheet(f, p, W, H, False, "fit", ppmm, 100.0, num, reserve=False, rotate=False)
+    img = sheet(f, p, W, H, False, "fit", ppmm, 100.0, num, rotate=False)
     return send_img(img)
 
 
@@ -596,7 +595,8 @@ def do_print():
     pct = get_pct(d.get("pct"))
     nd = d.get("num") or {}
     nargs = {"num": "1" if nd.get("on") else "0", "npos": nd.get("pos"), "nalign": nd.get("align"),
-             "nsize": nd.get("size"), "nstart": nd.get("start")}
+             "nsize": nd.get("size"), "nstart": nd.get("start"),
+             "nmargin": nd.get("margin"), "nbold": "1" if nd.get("bold") else "0"}
 
     def run():
         try:
