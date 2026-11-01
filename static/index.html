@@ -5,121 +5,170 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>PC Print</title>
 <style>
-:root{--bg:#f4f5f7;--card:#fff;--tx:#1b1f24;--mut:#6b7280;--pri:#2563eb;--bd:#e5e7eb}
-@media(prefers-color-scheme:dark){:root{--bg:#111418;--card:#1b2027;--tx:#e8eaed;--mut:#9aa3af;--bd:#2d343d}}
+:root{--bg:#f4f5f7;--card:#fff;--tx:#1b1f24;--mut:#6b7280;--pri:#2563eb;--bd:#e5e7eb;--hov:#eef2ff}
+@media(prefers-color-scheme:dark){:root{--bg:#0d1014;--card:#171b21;--tx:#e8eaed;--mut:#9aa3af;--bd:#2a313a;--hov:#1d2740}}
 *{box-sizing:border-box}[hidden]{display:none!important}
-body{margin:0;font:15px system-ui,"Segoe UI",sans-serif;background:var(--bg);color:var(--tx)}
-.wrap{padding:14px 18px}
-#dlg .wrap,#pv .wrap{max-width:1500px;margin:0 auto}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:10px}
-button,select,input[type=number],.btn{font:inherit;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx);padding:9px 14px;cursor:pointer}
+html,body{height:100%}
+body{margin:0;font:14px system-ui,"Segoe UI",sans-serif;background:var(--bg);color:var(--tx);display:flex;flex-direction:column;overflow:hidden}
+button,select,input[type=number],.btn{font:inherit;border-radius:9px;border:1px solid var(--bd);background:var(--card);color:var(--tx);padding:7px 12px;cursor:pointer}
+button:hover:not(:disabled){border-color:var(--pri)}
 button.p,.btn.p{background:var(--pri);color:#fff;border-color:var(--pri)}
-button.x{padding:6px 10px;color:#dc2626}
-button.s{padding:6px 10px}
-button:disabled,select:disabled{opacity:.5;cursor:default}
+button.p:hover:not(:disabled){filter:brightness(1.1)}
+button.x{padding:5px 9px;color:#dc2626}
+button.s{padding:5px 9px}
+button:disabled,select:disabled{opacity:.45;cursor:default}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .grow{flex:1;min-width:0}
 .name{font-weight:600;overflow-wrap:anywhere}
-.mut{color:var(--mut);font-size:13px}
-#bar{position:sticky;top:0;z-index:4;background:var(--bg);padding:10px 18px;border-bottom:1px solid var(--bd)}
-#bar .in{margin:0 auto}
-h1{font-size:18px;margin:0 8px 0 0}
-.empty{text-align:center;padding:70px 10px}
+.mut{color:var(--mut);font-size:12.5px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px;margin-bottom:10px}
+h1{font-size:17px;margin:0 8px 0 0}
+
+/* ---------- top bar ---------- */
+#bar{flex:none;z-index:4;background:var(--card);padding:8px 16px;border-bottom:1px solid var(--bd)}
+#bar .row{flex-wrap:nowrap;overflow-x:auto}
+#bar button,#bar label{white-space:nowrap}
+
+/* ---------- reader: sidebar + full-screen page grid ---------- */
+.main{flex:1;min-height:0;display:grid;grid-template-columns:290px minmax(0,1fr);gap:14px;padding:14px 16px}
+.side{overflow:auto;min-height:0;padding-right:4px}
+.stage{min-width:0;min-height:0;display:flex;flex-direction:column}
+#pages{flex:1;min-height:0;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,calc(300px*var(--rz,1)));gap:14px;justify-content:center;align-content:start;padding:2px 4px 14px}
+.rp{position:relative;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:8px}
+.rp img{width:100%;display:block;border-radius:4px;background:#fff;min-height:120px;box-shadow:0 1px 6px rgba(0,0,0,.25)}
+.rp .cap{margin-top:6px;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--mut)}
+.badge{position:absolute;top:14px;left:14px;min-width:28px;height:28px;padding:0 8px;border-radius:14px;background:var(--pri);color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 6px rgba(0,0,0,.4);z-index:2}
+.empty{margin:auto;text-align:center;padding:40px 10px}
 .empty .big{font-size:20px;font-weight:600;margin-bottom:6px}
-.empty button{font-size:17px;padding:14px 26px;margin-top:14px}
-.rp{flex:0 0 auto;width:calc(640px*var(--rz,1));margin:14px 0;text-align:center}
-#flist{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:10px}
-#flist .card{margin-bottom:0}
-#flist>p{grid-column:1/-1;margin:0}
-#pages{display:flex;flex-wrap:wrap;justify-content:safe center;align-items:flex-start;gap:6px 18px;overflow-x:auto}
-.rp img{width:100%;margin:0 auto;display:block;border-radius:3px;box-shadow:0 2px 12px rgba(0,0,0,.35);background:#fff;min-height:160px}
-.rp .mut{margin-top:4px}
-.field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.empty button{font-size:16px;padding:12px 24px;margin-top:14px}
+.fcard{padding:9px 10px;margin-bottom:8px}
+.fcard .name{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal}
+.fcard .row{gap:5px;margin-top:6px}
+.fcard .num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:11px;background:var(--pri);color:#fff;font-size:12px;font-weight:700;margin-right:6px;flex:none}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.field{display:flex;flex-direction:column;gap:3px;margin-bottom:8px;min-width:0}
+.field label{font-size:12px;color:var(--mut)}
 .field select,.field input{width:100%}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
-.pg{display:flex;flex-direction:column;gap:4px;font-size:12px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:6px}
-.pg img{width:100%;border-radius:6px;background:#fff}
-#dlg,#pv{position:fixed;inset:0;background:var(--bg);overflow:auto;z-index:10}
+
+/* ---------- print window ---------- */
+#dlg,#pv{position:fixed;inset:0;background:var(--bg);z-index:10}
 #pv{z-index:11}
-select:disabled{opacity:.5}
-.dcols{display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:16px;align-items:start}
-.dright{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
-.dright .card{margin-top:0!important}
-@media(max-width:1000px){.dcols{grid-template-columns:1fr}.dright{position:static;max-height:none}}
-.pvstage{display:flex;gap:10px;justify-content:safe center;align-items:flex-start;margin:10px 0;overflow-x:auto}
+#dlg{display:grid;grid-template-columns:350px minmax(0,1fr)}
+.dleft{height:100vh;overflow:auto;padding:12px;border-right:1px solid var(--bd);background:var(--card)}
+.dleft .field{margin-bottom:7px}
+.dleft select,.dleft input[type=number]{padding:6px 9px}
+.dleft p.mut{margin:3px 0;font-size:12px}
+.dleft p.mut:empty{display:none}
+.dleft .btns{display:grid;grid-template-columns:1fr 1.4fr;gap:8px;margin:8px 0 6px}
+.dleft .btns button{padding:11px 10px;font-weight:600}
+#pmsg{min-height:16px}
+.dright{height:100vh;display:flex;flex-direction:column;min-width:0}
+.dhead{flex:none;padding:12px 16px;border-bottom:1px solid var(--bd);background:var(--bg)}
+.grid{flex:1;min-height:0;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;align-content:start;padding:14px 16px}
+.pg{position:relative;display:flex;flex-direction:column;gap:6px;background:var(--card);border:2px solid var(--bd);border-radius:12px;padding:8px;cursor:pointer;transition:.12s}
+.pg:hover{border-color:var(--pri)}
+.pg.on{border-color:var(--pri);background:var(--hov)}
+.pg.off{opacity:.5}
+.pg .th{height:min(26vh,260px);display:flex;align-items:center;justify-content:center;background:rgba(127,127,127,.1);border-radius:8px;overflow:hidden}
+.pg .th img{max-width:100%;max-height:100%;object-fit:contain;background:#fff;box-shadow:0 1px 5px rgba(0,0,0,.3)}
+.pg .lb{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--mut)}
+.pg input[type=checkbox]{position:absolute;top:12px;right:12px;width:20px;height:20px;margin:0;z-index:2;cursor:pointer}
+.pg .badge{top:12px;left:12px;min-width:30px;height:30px;font-size:16px;border-radius:15px}
+
+/* ---------- preview ---------- */
+#pv{display:flex;flex-direction:column}
+.pvtop{flex:none;padding:8px 14px;border-bottom:1px solid var(--bd);background:var(--card);flex-wrap:nowrap;overflow-x:auto}
+.pvtop button,.pvtop select{white-space:nowrap}
+.pvstage{flex:1;min-height:0;display:flex;gap:14px;justify-content:safe center;align-items:flex-start;padding:12px;overflow:auto}
 .pvsheet{flex:0 0 auto;text-align:center}
-.pvsheet img{width:100%;display:block;border-radius:4px;box-shadow:0 2px 12px rgba(0,0,0,.35);background:#fff;min-height:120px}
+.pvsheet img{width:100%;display:block;border-radius:4px;box-shadow:0 2px 12px rgba(0,0,0,.4);background:#fff;min-height:120px}
+.pvfoot{flex:none;padding:6px 14px;border-top:1px solid var(--bd);background:var(--card);text-align:center}
+.pvfoot p{margin:2px 0}
 .lg{display:inline-block;width:12px;height:12px;vertical-align:-1px;margin-right:4px;border-radius:2px}
+
 #drop{position:fixed;inset:0;z-index:40;background:rgba(37,99,235,.18);display:flex;align-items:center;justify-content:center;pointer-events:none}
 #drop div{border:3px dashed var(--pri);background:var(--card);border-radius:18px;padding:36px 54px;font-size:22px;font-weight:600;text-align:center}
 #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#111;color:#fff;padding:10px 16px;border-radius:10px;z-index:30;max-width:80%;white-space:pre-line}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+@media(max-width:900px){
+  body{overflow:auto;display:block}
+  #bar{position:sticky;top:0}
+  .main{display:block}
+  #pages{overflow:visible;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  #dlg{display:block;overflow:auto}
+  .dleft,.dright{height:auto}
+  .grid{overflow:visible}
+}
 </style>
 </head>
 <body>
-<div id="bar"><div class="in row">
+<div id="bar"><div class="row">
   <h1>🖨 PC Print</h1>
   <button id="add" class="p">＋ Add files</button>
   <button id="bpaste" title="Paste copied files or a copied picture (Ctrl+V)">📋 Paste</button>
   <button id="bnum">🔢 Page numbers</button>
   <button id="rz" class="s" title="Ctrl + mouse wheel to zoom, Ctrl+0 to reset">100%</button>
-  <button id="rfit" class="s" title="Fit one whole page on the screen">⤢ Fit</button>
+  <button id="rfit" class="s" title="Make all pages fit on the screen">⤢ Fit all</button>
   <span class="grow"></span>
   <label id="autolbl" class="row mut" hidden title="Open PC Print minimized when Windows starts"><input type="checkbox" id="auto"> Start with Windows</label>
   <button id="bopen" class="p">🖨 Print all (Ctrl+P)</button>
 </div></div>
 
-<div class="wrap">
-  <div id="numpanel" class="card" hidden>
-    <label class="row"><input type="checkbox" id="numon"> <span class="name">Add page numbers to all pages</span></label>
-    <p class="mut">The number is printed directly on the page, in Times New Roman. All files count as one document (1, 2, 3…), so printing one file keeps its own serial numbers.</p>
-    <div class="two">
-      <div class="field"><label>Position</label>
-        <select id="numpos"><option value="bottom">Bottom</option><option value="top">Top</option></select></div>
-      <div class="field"><label>Align</label>
-        <select id="numalign"><option value="center">Center</option><option value="right">Right</option><option value="left">Left</option></select></div>
-      <div class="field"><label>Font size (pt)</label>
-        <input id="numsize" type="number" min="6" max="72" step="1" value="12"></div>
-      <div class="field"><label>Start at</label>
-        <input id="numstart" type="number" min="1" step="1" value="1"></div>
-      <div class="field"><label>Distance from the page edge (mm)</label>
-        <input id="nummargin" type="number" min="2" max="40" step="1" value="8"></div>
-      <div class="field"><label>Style</label>
-        <label class="row"><input type="checkbox" id="numbold"> <b>Bold</b></label></div>
+<div class="main">
+  <aside class="side">
+    <div id="numpanel" class="card" hidden>
+      <label class="row"><input type="checkbox" id="numon"> <span class="name">Add page numbers to all pages</span></label>
+      <p class="mut">Printed directly on the page in Times New Roman. All files count as one document (1, 2, 3…).</p>
+      <div class="two">
+        <div class="field"><label>Position</label>
+          <select id="numpos"><option value="bottom">Bottom</option><option value="top">Top</option></select></div>
+        <div class="field"><label>Align</label>
+          <select id="numalign"><option value="center">Center</option><option value="right">Right</option><option value="left">Left</option></select></div>
+        <div class="field"><label>Font size (pt)</label>
+          <input id="numsize" type="number" min="6" max="72" step="1" value="12"></div>
+        <div class="field"><label>Start at</label>
+          <input id="numstart" type="number" min="1" step="1" value="1"></div>
+        <div class="field"><label>Edge distance (mm)</label>
+          <input id="nummargin" type="number" min="2" max="40" step="1" value="8"></div>
+        <div class="field"><label>Style</label>
+          <label class="row"><input type="checkbox" id="numbold"> <b>Bold</b></label></div>
+      </div>
     </div>
-  </div>
-
-  <div id="flist"></div>
-  <div id="empty" class="empty" hidden>
-    <div class="big">No file open</div>
-    <div class="mut">PDF and images only. Drag files here, press Ctrl+V to paste, or right-click a file → Open with → PC Print.</div>
-    <button id="add2" class="p">Choose files</button>
-  </div>
-  <div id="pages"></div>
+    <div id="flist"></div>
+  </aside>
+  <section class="stage">
+    <div id="empty" class="empty" hidden>
+      <div class="big">No file open</div>
+      <div class="mut">PDF and images only. Drag files here, press Ctrl+V to paste, or right-click a file → Open with → PC Print.</div>
+      <button id="add2" class="p">Choose files</button>
+    </div>
+    <div id="pages"></div>
+  </section>
 </div>
 
 <div id="dlg" hidden>
-  <div class="wrap">
-    <div class="row"><button id="close">← Back</button><div class="name grow" id="ptitle">Print</div></div>
-    <div class="dcols" style="margin-top:10px"><div>
-    <div class="row"><span class="mut grow">Select pages to print</span>
-      <button id="sall" class="s">All</button><button id="snone" class="s">None</button></div>
-    <div class="grid" id="pgrid" style="margin-top:8px"></div>
-    </div><div class="dright">
-    <div class="card" style="margin-top:14px">
-      <div class="field"><label>Printer</label><select id="printer"></select></div>
-      <div class="field"><label>Profile (saved driver settings)</label>
-        <select id="profile"><option value="">None (normal way)</option></select>
-        <div class="row">
-          <button id="bprof" class="grow">⚙ Printer Properties (save as profile)</button>
-          <button id="bdel" class="x" hidden>🗑 Delete</button>
-        </div>
-        <p class="mut" id="pnote"></p>
+  <aside class="dleft">
+    <div class="row" style="flex-wrap:nowrap"><button id="close" title="Back (Esc)">←</button><div class="name grow" id="ptitle">Print</div></div>
+    <div class="btns">
+      <button id="bprev">👁 Preview</button>
+      <button id="bprint" class="p">🖨 Print</button>
+    </div>
+    <p id="pmsg" class="mut"></p>
+
+    <div class="field"><label>Printer</label><select id="printer"></select></div>
+    <div class="field"><label>Profile (saved driver settings)</label>
+      <select id="profile"><option value="">None (normal way)</option></select>
+      <div class="row" style="gap:6px;margin-top:4px">
+        <button id="bprof" class="grow s">⚙ Printer Properties</button>
+        <button id="bdel" class="x" hidden>🗑</button>
       </div>
+      <p class="mut" id="pnote"></p>
+    </div>
+    <div class="two">
       <div class="field"><label>Paper size</label><select id="paper"></select></div>
       <div class="field"><label>Orientation</label>
         <select id="orient">
-          <option value="auto">Auto (match the page)</option>
+          <option value="auto">Auto</option>
           <option value="portrait">Portrait</option>
           <option value="landscape">Landscape</option>
         </select></div>
@@ -131,42 +180,50 @@ select:disabled{opacity:.5}
           <option value="short">Short edge</option>
         </select></div>
       <div class="field"><label>Copies</label><input id="copies" type="number" min="1" max="99" value="1" inputmode="numeric"></div>
-      <div class="field"><label>Scaling</label><select id="scale"></select>
-        <div id="pctbox" class="row" hidden>
-          <button id="pctm" type="button">−</button>
-          <input id="pct" type="number" min="10" max="400" step="5" value="100" inputmode="numeric" style="width:90px">
-          <span>%</span>
-          <button id="pctp" type="button">+</button>
-        </div>
-        <input id="pctr" type="range" min="10" max="300" step="5" value="100" hidden>
-        <p class="mut" id="scnote"></p></div>
-      <div class="field"><label class="row"><input type="checkbox" id="pnumon"> <span class="name">Add page numbers</span></label>
-        <p class="mut" id="numnote"></p></div>
-      <p class="mut" id="dnote"></p>
-      <div class="row">
-        <button id="bprev" class="grow">👁 Preview</button>
-        <button id="bprint" class="grow p">🖨 Print</button>
-      </div>
-      <p id="pmsg"></p>
+      <div class="field"><label>Scaling</label><select id="scale"></select></div>
     </div>
-    </div></div>
-  </div>
+    <div id="pctbox" class="row" hidden style="margin-bottom:6px">
+      <button id="pctm" type="button">−</button>
+      <input id="pct" type="number" min="10" max="400" step="5" value="100" inputmode="numeric" style="width:80px">
+      <span>%</span>
+      <button id="pctp" type="button">+</button>
+    </div>
+    <input id="pctr" type="range" min="10" max="300" step="5" value="100" hidden style="width:100%">
+    <p class="mut" id="scnote"></p>
+    <label class="row" style="margin-top:4px"><input type="checkbox" id="pnumon"> <span class="name">Add page numbers</span></label>
+    <p class="mut" id="numnote"></p>
+    <p class="mut" id="dnote"></p>
+  </aside>
+
+  <section class="dright">
+    <div class="dhead row">
+      <div class="grow">
+        <div class="name">Pages to print</div>
+        <div class="mut">The number badge is the print order. Click a page to select / unselect it.</div>
+      </div>
+      <span class="name" id="scount"></span>
+      <button id="sall" class="s">All</button><button id="snone" class="s">None</button>
+    </div>
+    <div class="grid" id="pgrid"></div>
+  </section>
 </div>
 
 <div id="pv" hidden>
-  <div class="wrap">
-    <div class="row"><button id="pvclose">✕ Close</button><div class="name grow">Print preview</div></div>
-    <div class="field" style="margin-top:12px"><label>Scaling</label><select id="pvscale"></select>
-      <div id="pvpct" class="row" hidden>
-        <button id="pvpm" type="button">−</button><span class="name" id="pvpv">100%</span><button id="pvpp" type="button">+</button>
-      </div>
-    </div>
-    <div class="pvstage" id="pvstage"></div>
-    <div class="row" style="justify-content:center">
-      <button id="pvprev">‹ Prev</button><span id="pvpos" class="name"></span><button id="pvnext">Next ›</button>
-      <button id="pvz" class="s" title="Ctrl + mouse wheel to zoom, Ctrl+0 to reset">100%</button>
-    </div>
-    <p class="mut" style="text-align:center">
+  <div class="pvtop row">
+    <button id="pvclose">✕ Close</button>
+    <div class="name">Print preview</div>
+    <span class="grow"></span>
+    <select id="pvscale"></select>
+    <span id="pvpct" class="row" style="gap:4px;flex-wrap:nowrap" hidden>
+      <button id="pvpm" type="button">−</button><span class="name" id="pvpv">100%</span><button id="pvpp" type="button">+</button>
+    </span>
+    <button id="pvprev">‹ Prev</button><span id="pvpos" class="name"></span><button id="pvnext">Next ›</button>
+    <button id="pvz" class="s" title="Ctrl + mouse wheel to zoom, Ctrl+0 to reset">100%</button>
+    <button id="pvprint" class="p">🖨 Print</button>
+  </div>
+  <div class="pvstage" id="pvstage"></div>
+  <div class="pvfoot">
+    <p class="mut">
       <span class="lg" style="background:#cdd0d6;border:1px solid #888"></span>printer cannot print here &nbsp;
       <span class="lg" style="background:#fff;border:2px dashed #2563eb"></span>printable area
     </p>
@@ -214,8 +271,9 @@ function renderFiles(){
     dn.onclick=async()=>{await api('/api/move',{method:'POST',headers:JH,body:JSON.stringify({id:f.id,dir:'down'})});refresh(true)};
     const x=el('button',{className:'x',textContent:'✕'});
     x.onclick=async()=>{await api('/api/files/'+f.id,{method:'DELETE'});refresh(true)};
-    L.append(el('div',{className:'card'},el('div',{className:'row'},
-      el('div',{className:'grow'},el('div',{className:'name',textContent:f.name}),el('div',{className:'mut',textContent:meta})),pr,up,dn,x)));
+    const nm=el('div',{className:'name',title:f.name},el('span',{className:'num',textContent:i+1}),f.name);
+    L.append(el('div',{className:'card fcard'},nm,el('div',{className:'mut',textContent:meta}),
+      el('div',{className:'row'},pr,el('span',{className:'grow'}),up,dn,x)));
   });
   if(FILES.length>1){
     const c=el('button',{className:'x',textContent:'Remove all files'});
@@ -227,30 +285,31 @@ function numQS(){
   return NUM.on?`&num=1&npos=${NUM.pos}&nalign=${NUM.align}&nsize=${NUM.size}&nstart=${NUM.start}&nmargin=${NUM.margin}&nbold=${NUM.bold?1:0}`:'';
 }
 let RZ=1,rzT=null,rzQ=1;
-const qFor=z=>{const need=640*z*(window.devicePixelRatio||1)/800;return need<=1?1:need<=1.5?1.5:need<=2?2:3};
+const qFor=z=>{const need=300*z*(window.devicePixelRatio||1)/800;return need<=1?1:need<=1.5?1.5:need<=2?2:3};
 function viewSrc(f,p){return `/api/view?f=${f}&p=${p}&q=${rzQ}${numQS()}&v=${REV}`}
 function reloadViews(){rzQ=qFor(RZ);document.querySelectorAll('#pages img').forEach(im=>{im.src=viewSrc(im.dataset.f,im.dataset.p)})}
 function setRZ(z){
-  z=Math.max(.5,Math.min(4,Math.round(z*100)/100));
-  const h=document.documentElement,span=h.scrollHeight-h.clientHeight;
-  const ratio=span>0?window.scrollY/span:0;
-  RZ=z;$('#pages').style.setProperty('--rz',z);$('#rz').textContent=Math.round(z*100)+'%';
-  const ns=h.scrollHeight-h.clientHeight;if(ns>0)window.scrollTo(window.scrollX,ratio*ns);
+  z=Math.max(.3,Math.min(3,Math.round(z*100)/100));
+  const P=$('#pages'),span=P.scrollHeight-P.clientHeight;
+  const ratio=span>0?P.scrollTop/span:0;
+  RZ=z;P.style.setProperty('--rz',z);$('#rz').textContent=Math.round(z*100)+'%';
+  const ns=P.scrollHeight-P.clientHeight;if(ns>0)P.scrollTop=ratio*ns;
   clearTimeout(rzT);rzT=setTimeout(()=>{if(qFor(RZ)!==rzQ)reloadViews()},400);
 }
 $('#rz').onclick=()=>setRZ(1);
 $('#rfit').onclick=()=>{
-  const im=document.querySelector('#pages img');
-  const ratio=im&&im.naturalWidth?im.naturalHeight/im.naturalWidth:1.414;
-  setRZ((window.innerHeight-$('#bar').offsetHeight-70)/(640*ratio));
-  window.scrollTo(0,$('#pages').offsetTop-$('#bar').offsetHeight-10);
+  const P=$('#pages');let z=3;
+  while(z>.3){setRZ(z);if(P.scrollHeight<=P.clientHeight+1)break;z=Math.round((z-.05)*100)/100}
+  P.scrollTop=0;
 };
 function renderPages(){
   const box=$('#pages');box.innerHTML='';rzQ=qFor(RZ);
+  let n=0;
   FILES.forEach(f=>{for(let p=0;p<f.pages;p++){
-    box.append(el('div',{className:'rp'},
-      (()=>{const im=el('img',{loading:'lazy',alt:'',src:viewSrc(f.id,p)});im.dataset.f=f.id;im.dataset.p=p;return im})(),
-      el('div',{className:'mut',textContent:f.name+(f.pages>1?` · page ${p+1}`:'')})));
+    n++;
+    const im=el('img',{loading:'lazy',alt:'',src:viewSrc(f.id,p)});im.dataset.f=f.id;im.dataset.p=p;
+    const t=`${f.name}`+(f.pages>1?` · page ${p+1}`:'');
+    box.append(el('div',{className:'rp'},el('b',{className:'badge',textContent:n}),im,el('div',{className:'cap',textContent:t,title:t})));
   }});
 }
 
@@ -333,23 +392,31 @@ function openPrint(onlyId){
   const pages=[];let n=0;
   FILES.forEach(f=>{for(let i=0;i<f.pages;i++){n++;
     if(only&&f.id!==only.id)continue;
-    pages.push({f:f.id,p:i,land:f.lands[i],label:`${n}. ${f.name}${f.pages>1?' (p'+(i+1)+')':''}`})}});
+    pages.push({f:f.id,p:i,n,land:f.lands[i],label:`${f.name}${f.pages>1?' (p'+(i+1)+')':''}`})}});
   CUR={title:only?only.name:FILES[0].name+(FILES.length>1?' +'+(FILES.length-1):''),pages};
   $('#ptitle').textContent=CUR.title;
   const g=$('#pgrid');g.innerHTML='';
   pages.forEach(p=>{
-    const lb=el('label',{className:'pg'},el('input',{type:'checkbox',checked:true}),
-      el('img',{loading:'lazy',src:`/api/thumb?f=${p.f}&p=${p.p}`}),el('span',{textContent:p.label}));
-    p.cb=lb.firstChild;g.append(lb);
+    const cb=el('input',{type:'checkbox',checked:true});
+    const lb=el('label',{className:'pg on'},cb,el('b',{className:'badge',textContent:p.n}),
+      el('div',{className:'th'},el('img',{loading:'lazy',src:`/api/thumb?f=${p.f}&p=${p.p}`})),
+      el('span',{className:'lb',textContent:p.label,title:p.label}));
+    p.cb=cb;p.lb=lb;cb.onchange=syncSel;g.append(lb);
   });
+  syncSel();
   numNote();
   msg('');$('#copies').value=1;$('#orient').value='auto';
   $('#dlg').hidden=false;loadPrinters();
 }
 $('#bopen').onclick=()=>openPrint();
 $('#close').onclick=()=>{$('#dlg').hidden=true};
-$('#sall').onclick=()=>CUR&&CUR.pages.forEach(p=>p.cb.checked=true);
-$('#snone').onclick=()=>CUR&&CUR.pages.forEach(p=>p.cb.checked=false);
+function syncSel(){
+  if(!CUR)return;let n=0;
+  CUR.pages.forEach(p=>{const on=p.cb.checked;if(on)n++;p.lb.classList.toggle('on',on);p.lb.classList.toggle('off',!on)});
+  $('#scount').textContent=`${n} of ${CUR.pages.length} selected`;
+}
+$('#sall').onclick=()=>{if(CUR){CUR.pages.forEach(p=>p.cb.checked=true);syncSel()}};
+$('#snone').onclick=()=>{if(CUR){CUR.pages.forEach(p=>p.cb.checked=false);syncSel()}};
 document.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='p'){e.preventDefault();openPrint()}
   else if(e.key==='Escape'){
@@ -398,7 +465,7 @@ function profChange(){
   $('#duplex').disabled=has;
   $('#pnote').textContent=has
     ?'This profile controls the driver options (two-sided, paper type, quality…). Paper size, orientation, color and copies still follow the settings below.'
-    :'Optional. With no profile, printing works the normal way.';
+    :'';
 }
 $('#profile').onchange=profChange;
 $('#bprof').onclick=async()=>{
@@ -519,10 +586,13 @@ $('#pvstage').addEventListener('touchend',e=>{
 /* ---- preview zoom (Ctrl + wheel) and keyboard ---- */
 let PZ=1,pzT=null;
 function pvSheetW(){
-  const sw=$('#pvstage').clientWidth||600;
-  const base=PV.step===2?Math.min(420,(sw-10)/2):Math.min(420,sw);
-  return base*PZ;
+  const st=$('#pvstage'),sw=(st.clientWidth||600)-26,sh=(st.clientHeight||600)-48;
+  const ratio=orient()==='landscape'?0.707:1.414;
+  const per=PV.step===2?(sw-14)/2:sw;
+  return Math.max(120,Math.min(per,sh/ratio))*PZ;
 }
+$('#pvprint').onclick=()=>{$('#pvclose').click();$('#bprint').click()};
+let rsT=null;window.addEventListener('resize',()=>{clearTimeout(rsT);rsT=setTimeout(()=>{if(!$('#pv').hidden)pvShow()},250)});
 function pvNeedPw(){return Math.min(1800,Math.max(720,Math.ceil(pvSheetW()*(window.devicePixelRatio||1)/120)*120))}
 function setPZ(z){
   PZ=Math.max(.6,Math.min(4,Math.round(z*100)/100));
