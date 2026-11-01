@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>PC Print</title>
 <style>
-:root{--bg:#f4f5f7;--card:#fff;--tx:#1b1f24;--mut:#6b7280;--pri:#2563eb;--bd:#e5e7eb;--hov:#eef2ff}
-@media(prefers-color-scheme:dark){:root{--bg:#0d1014;--card:#171b21;--tx:#e8eaed;--mut:#9aa3af;--bd:#2a313a;--hov:#1d2740}}
+:root{--bg:#e9ebef;--card:#fff;--tx:#1b1f24;--mut:#6b7280;--pri:#2563eb;--bd:#e0e3e8;--hov:#eef2ff}
+@media(prefers-color-scheme:dark){:root{--bg:#0b0d11;--card:#161a20;--tx:#e8eaed;--mut:#9aa3af;--bd:#2a313a;--hov:#1d2740}}
 *{box-sizing:border-box}[hidden]{display:none!important}
 html,body{height:100%}
 body{margin:0;font:14px system-ui,"Segoe UI",sans-serif;background:var(--bg);color:var(--tx);display:flex;flex-direction:column;overflow:hidden}
 button,select,input[type=number],.btn{font:inherit;border-radius:9px;border:1px solid var(--bd);background:var(--card);color:var(--tx);padding:7px 12px;cursor:pointer}
 button:hover:not(:disabled){border-color:var(--pri)}
-button.p,.btn.p{background:var(--pri);color:#fff;border-color:var(--pri)}
+button.p{background:var(--pri);color:#fff;border-color:var(--pri);font-weight:600}
 button.p:hover:not(:disabled){filter:brightness(1.1)}
 button.x{padding:5px 9px;color:#dc2626}
 button.s{padding:5px 9px}
@@ -22,68 +22,59 @@ button:disabled,select:disabled{opacity:.45;cursor:default}
 .name{font-weight:600;overflow-wrap:anywhere}
 .mut{color:var(--mut);font-size:12.5px}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px;margin-bottom:10px}
-h1{font-size:17px;margin:0 8px 0 0}
-
-/* ---------- top bar ---------- */
-#bar{flex:none;z-index:4;background:var(--card);padding:8px 16px;border-bottom:1px solid var(--bd)}
-#bar .row{flex-wrap:nowrap;overflow-x:auto}
-#bar button,#bar label{white-space:nowrap}
-
-/* ---------- reader: sidebar + full-screen page grid ---------- */
-.main{flex:1;min-height:0;display:grid;grid-template-columns:290px minmax(0,1fr);gap:14px;padding:14px 16px}
-.side{overflow:auto;min-height:0;padding-right:4px}
-.stage{min-width:0;min-height:0;display:flex;flex-direction:column}
-#pages{flex:1;min-height:0;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,calc(300px*var(--rz,1)));gap:14px;justify-content:center;align-content:start;padding:2px 4px 14px}
-.rp{position:relative;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:8px}
-.rp img{width:100%;display:block;border-radius:4px;background:#fff;min-height:120px;box-shadow:0 1px 6px rgba(0,0,0,.25)}
-.rp .cap{margin-top:6px;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--mut)}
-.badge{position:absolute;top:14px;left:14px;min-width:28px;height:28px;padding:0 8px;border-radius:14px;background:var(--pri);color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 6px rgba(0,0,0,.4);z-index:2}
-.empty{margin:auto;text-align:center;padding:40px 10px}
-.empty .big{font-size:20px;font-weight:600;margin-bottom:6px}
-.empty button{font-size:16px;padding:12px 24px;margin-top:14px}
-.fcard{padding:9px 10px;margin-bottom:8px}
-.fcard .name{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal}
-.fcard .row{gap:5px;margin-top:6px}
-.fcard .num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:11px;background:var(--pri);color:#fff;font-size:12px;font-weight:700;margin-right:6px;flex:none}
+h1{font-size:17px;margin:0 6px 0 0;white-space:nowrap}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .field{display:flex;flex-direction:column;gap:3px;margin-bottom:8px;min-width:0}
 .field label{font-size:12px;color:var(--mut)}
 .field select,.field input{width:100%}
+body.s1 .s2only,body.s2 .s1only{display:none!important}
 
-/* ---------- print window ---------- */
-#dlg,#pv{position:fixed;inset:0;background:var(--bg);z-index:10}
-#pv{z-index:11}
-#dlg{display:grid;grid-template-columns:350px minmax(0,1fr)}
-.dleft{height:100vh;overflow:auto;padding:12px;border-right:1px solid var(--bd);background:var(--card)}
-.dleft .field{margin-bottom:7px}
-.dleft select,.dleft input[type=number]{padding:6px 9px}
-.dleft p.mut{margin:3px 0;font-size:12px}
-.dleft p.mut:empty{display:none}
-.dleft .btns{display:grid;grid-template-columns:1fr 1.4fr;gap:8px;margin:8px 0 6px}
-.dleft .btns button{padding:11px 10px;font-weight:600}
-#pmsg{min-height:16px}
-.dright{height:100vh;display:flex;flex-direction:column;min-width:0}
-.dhead{flex:none;padding:12px 16px;border-bottom:1px solid var(--bd);background:var(--bg)}
-.grid{flex:1;min-height:0;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;align-content:start;padding:14px 16px}
-.pg{position:relative;display:flex;flex-direction:column;gap:6px;background:var(--card);border:2px solid var(--bd);border-radius:12px;padding:8px;cursor:pointer;transition:.12s}
-.pg:hover{border-color:var(--pri)}
-.pg.on{border-color:var(--pri);background:var(--hov)}
-.pg.off{opacity:.5}
-.pg .th{height:min(26vh,260px);display:flex;align-items:center;justify-content:center;background:rgba(127,127,127,.1);border-radius:8px;overflow:hidden}
-.pg .th img{max-width:100%;max-height:100%;object-fit:contain;background:#fff;box-shadow:0 1px 5px rgba(0,0,0,.3)}
-.pg .lb{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--mut)}
-.pg input[type=checkbox]{position:absolute;top:12px;right:12px;width:20px;height:20px;margin:0;z-index:2;cursor:pointer}
-.pg .badge{top:12px;left:12px;min-width:30px;height:30px;font-size:16px;border-radius:15px}
+/* ---------- top bar ---------- */
+#bar{flex:none;z-index:8;background:var(--card);padding:8px 14px;border-bottom:1px solid var(--bd)}
+#bar button,#bar label{white-space:nowrap}
+.zg{display:flex;gap:4px;align-items:center}
+.zg #rz{min-width:56px}
+.dd{position:relative}
+.pop{position:absolute;top:calc(100% + 8px);left:0;width:340px;z-index:20;box-shadow:0 8px 30px rgba(0,0,0,.35);margin:0}
+.pop p{margin:4px 0}
 
-/* ---------- preview ---------- */
-#pv{display:flex;flex-direction:column}
-.pvtop{flex:none;padding:8px 14px;border-bottom:1px solid var(--bd);background:var(--card);flex-wrap:nowrap;overflow-x:auto}
-.pvtop button,.pvtop select{white-space:nowrap}
-.pvstage{flex:1;min-height:0;display:flex;gap:14px;justify-content:safe center;align-items:flex-start;padding:12px;overflow:auto}
+/* ---------- layout: sliding side panel + full stage ---------- */
+.main{flex:1;min-height:0;display:flex;position:relative;overflow:hidden}
+.side{flex:none;width:320px;overflow:auto;padding:12px;background:var(--card);border-right:1px solid var(--bd);transition:margin-left .25s ease}
+.main.collapsed .side{margin-left:-321px}
+.side h3{margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut)}
+.side p.mut{margin:3px 0;font-size:12px}
+.side p.mut:empty{display:none}
+.side select,.side input[type=number]{padding:6px 9px}
+.stage{flex:1;min-width:0;min-height:0;position:relative;display:flex;flex-direction:column}
+
+/* ---------- step 1: book-style scrolling pages ---------- */
+#pages{flex:1;min-height:0;overflow:auto;padding:12px}
+.rp{width:calc(min(900px,100%)*var(--rz,1));margin:0 auto 18px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:8px 8px 6px}
+.rp .ph{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.rp .cap{font-size:12.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rp .sel{display:flex;align-items:center;gap:5px;font-size:12.5px;cursor:pointer;white-space:nowrap}
+.rp img{width:100%;display:block;border-radius:3px;background:#fff;min-height:160px;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+.rp.off img{opacity:.3}
+.rp.off .badge{background:#6b7280}
+.badge{min-width:28px;height:28px;padding:0 8px;border-radius:14px;background:var(--pri);color:#fff;font-weight:700;font-size:15px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.empty{margin:auto;text-align:center;padding:40px 10px}
+.empty .big{font-size:20px;font-weight:600;margin-bottom:6px}
+.empty button{font-size:16px;padding:12px 24px;margin-top:14px}
+.fcard{padding:9px 10px;margin-bottom:8px}
+.fcard .name{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fcard .row{gap:5px;margin-top:6px}
+.fcard .num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:11px;background:var(--pri);color:#fff;font-size:12px;font-weight:700;margin-right:6px}
+.selbox .cnt{font-size:15px;font-weight:700}
+
+/* ---------- step 2: preview + status ---------- */
+.pvstage{flex:1;min-height:0;overflow:auto;padding:14px}
+.pvrow{display:flex;gap:14px;justify-content:center;margin:0 auto 18px;width:max-content;min-width:100%}
 .pvsheet{flex:0 0 auto;text-align:center}
-.pvsheet img{width:100%;display:block;border-radius:4px;box-shadow:0 2px 12px rgba(0,0,0,.4);background:#fff;min-height:120px}
-.pvfoot{flex:none;padding:6px 14px;border-top:1px solid var(--bd);background:var(--card);text-align:center}
-.pvfoot p{margin:2px 0}
+.pvsheet img{width:100%;display:block;border-radius:3px;box-shadow:0 2px 14px rgba(0,0,0,.4);background:#fff;min-height:120px}
+.pvsheet small{display:block;margin-top:4px}
+.pill{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:5;background:#111;color:#fff;padding:9px 18px;border-radius:22px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.4);cursor:pointer;max-width:90%}
+.pill.ok{background:#15803d}.pill.err{background:#b91c1c}
 .lg{display:inline-block;width:12px;height:12px;vertical-align:-1px;margin-right:4px;border-radius:2px}
 
 #drop{position:fixed;inset:0;z-index:40;background:rgba(37,99,235,.18);display:flex;align-items:center;justify-content:center;pointer-events:none}
@@ -91,32 +82,24 @@ h1{font-size:17px;margin:0 8px 0 0}
 #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#111;color:#fff;padding:10px 16px;border-radius:10px;z-index:30;max-width:80%;white-space:pre-line}
 
 @media(max-width:900px){
-  body{overflow:auto;display:block}
-  #bar{position:sticky;top:0}
-  .main{display:block}
-  #pages{overflow:visible;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
-  #dlg{display:block;overflow:auto}
-  .dleft,.dright{height:auto}
-  .grid{overflow:visible}
+  .side{position:absolute;z-index:6;top:0;bottom:0;left:0;max-width:88%;box-shadow:4px 0 24px rgba(0,0,0,.35)}
+  .main.collapsed .side{margin-left:-110%}
 }
 </style>
 </head>
-<body>
+<body class="s1">
 <div id="bar"><div class="row">
+  <button id="bside" title="Show / hide the side panel">☰</button>
   <h1>🖨 PC Print</h1>
-  <button id="add" class="p">＋ Add files</button>
-  <button id="bpaste" title="Paste copied files or a copied picture (Ctrl+V)">📋 Paste</button>
-  <button id="bnum">🔢 Page numbers</button>
-  <button id="rz" class="s" title="Ctrl + mouse wheel to zoom, Ctrl+0 to reset">100%</button>
-  <button id="rfit" class="s" title="Make all pages fit on the screen">⤢ Fit all</button>
-  <span class="grow"></span>
-  <label id="autolbl" class="row mut" hidden title="Open PC Print minimized when Windows starts"><input type="checkbox" id="auto"> Start with Windows</label>
-  <button id="bopen" class="p">🖨 Print all (Ctrl+P)</button>
-</div></div>
+  <span id="stepname" class="mut">Step 1 of 2 · Check pages</span>
 
-<div class="main">
-  <aside class="side">
-    <div id="numpanel" class="card" hidden>
+  <span class="s1only row" style="gap:6px">
+    <button id="add" class="p">＋ Add files</button>
+    <button id="bpaste" title="Paste copied files or a copied picture (Ctrl+V)">📋 Paste</button>
+  </span>
+  <div class="dd">
+    <button id="bnum">🔢 Page numbers</button>
+    <div id="numpanel" class="card pop" hidden>
       <label class="row"><input type="checkbox" id="numon"> <span class="name">Add page numbers to all pages</span></label>
       <p class="mut">Printed directly on the page in Times New Roman. All files count as one document (1, 2, 3…).</p>
       <div class="two">
@@ -134,9 +117,88 @@ h1{font-size:17px;margin:0 8px 0 0}
           <label class="row"><input type="checkbox" id="numbold"> <b>Bold</b></label></div>
       </div>
     </div>
+  </div>
+
+  <span class="zg">
+    <button id="zout" class="s" title="Zoom out (Ctrl + wheel)">−</button>
+    <button id="rz" class="s" title="Reset zoom (Ctrl+0)">100%</button>
+    <button id="zin" class="s" title="Zoom in (Ctrl + wheel)">＋</button>
+    <button id="rfit" class="s" title="Fit one whole page on the screen">⤢ Fit page</button>
+  </span>
+
+  <span class="grow"></span>
+  <label id="autolbl" class="row mut" hidden title="Open PC Print minimized when Windows starts"><input type="checkbox" id="auto"> Start with Windows</label>
+  <button id="bopen" class="p s1only">Preview &amp; Print →</button>
+  <button id="close" class="s2only">← Back to pages</button>
+  <button id="bprint" class="p s2only">🖨 Print</button>
+</div></div>
+
+<div class="main" id="main">
+
+  <!-- side panel, step 1 -->
+  <aside class="side" id="sideA">
+    <div class="card selbox">
+      <h3>Pages to print</h3>
+      <div class="row"><span class="cnt grow" id="scount"></span>
+        <button id="sall" class="s">All</button><button id="snone" class="s">None</button></div>
+      <p class="mut">Tick “Print” above each page to include or skip it.</p>
+    </div>
+    <h3>Files</h3>
     <div id="flist"></div>
   </aside>
-  <section class="stage">
+
+  <!-- side panel, step 2 -->
+  <aside class="side" id="sideB" hidden>
+    <div id="setp">
+      <h3>Print settings</h3>
+      <div class="field"><label>Printer</label><select id="printer"></select></div>
+      <div class="field"><label>Profile (saved driver settings)</label>
+        <select id="profile"><option value="">None (normal way)</option></select>
+        <div class="row" style="gap:6px;margin-top:4px">
+          <button id="bprof" class="grow s">⚙ Printer Properties</button>
+          <button id="bdel" class="x" hidden>🗑</button>
+        </div>
+        <p class="mut" id="pnote"></p>
+      </div>
+      <div class="two">
+        <div class="field"><label>Paper size</label><select id="paper"></select></div>
+        <div class="field"><label>Orientation</label>
+          <select id="orient">
+            <option value="auto">Auto</option>
+            <option value="portrait">Portrait</option>
+            <option value="landscape">Landscape</option>
+          </select></div>
+        <div class="field"><label>Color</label><select id="color"></select></div>
+        <div class="field" id="duprow"><label>Two-sided</label>
+          <select id="duplex">
+            <option value="off">Off (one side)</option>
+            <option value="long">Long edge</option>
+            <option value="short">Short edge</option>
+          </select></div>
+        <div class="field"><label>Copies</label><input id="copies" type="number" min="1" max="99" value="1" inputmode="numeric"></div>
+        <div class="field"><label>Scaling</label><select id="scale"></select></div>
+      </div>
+      <div id="pctbox" class="row" hidden style="margin-bottom:6px">
+        <button id="pctm" type="button">−</button>
+        <input id="pct" type="number" min="10" max="400" step="5" value="100" inputmode="numeric" style="width:80px">
+        <span>%</span>
+        <button id="pctp" type="button">+</button>
+      </div>
+      <input id="pctr" type="range" min="10" max="300" step="5" value="100" hidden style="width:100%">
+      <p class="mut" id="scnote"></p>
+      <label class="row" style="margin-top:4px"><input type="checkbox" id="pnumon"> <span class="name">Add page numbers</span></label>
+      <p class="mut" id="numnote"></p>
+      <p class="mut" id="dnote"></p>
+    </div>
+    <p class="mut" style="margin-top:10px">
+      <span class="lg" style="background:#cdd0d6;border:1px solid #888"></span>printer cannot print here<br>
+      <span class="lg" style="background:#fff;border:2px dashed #2563eb"></span>printable area
+    </p>
+    <p class="mut" id="pvinfo"></p>
+  </aside>
+
+  <!-- step 1 stage -->
+  <section class="stage" id="v1">
     <div id="empty" class="empty" hidden>
       <div class="big">No file open</div>
       <div class="mut">PDF and images only. Drag files here, press Ctrl+V to paste, or right-click a file → Open with → PC Print.</div>
@@ -144,110 +206,54 @@ h1{font-size:17px;margin:0 8px 0 0}
     </div>
     <div id="pages"></div>
   </section>
-</div>
 
-<div id="dlg" hidden>
-  <aside class="dleft">
-    <div class="row" style="flex-wrap:nowrap"><button id="close" title="Back (Esc)">←</button><div class="name grow" id="ptitle">Print</div></div>
-    <div class="btns">
-      <button id="bprev">👁 Preview</button>
-      <button id="bprint" class="p">🖨 Print</button>
-    </div>
-    <p id="pmsg" class="mut"></p>
-
-    <div class="field"><label>Printer</label><select id="printer"></select></div>
-    <div class="field"><label>Profile (saved driver settings)</label>
-      <select id="profile"><option value="">None (normal way)</option></select>
-      <div class="row" style="gap:6px;margin-top:4px">
-        <button id="bprof" class="grow s">⚙ Printer Properties</button>
-        <button id="bdel" class="x" hidden>🗑</button>
-      </div>
-      <p class="mut" id="pnote"></p>
-    </div>
-    <div class="two">
-      <div class="field"><label>Paper size</label><select id="paper"></select></div>
-      <div class="field"><label>Orientation</label>
-        <select id="orient">
-          <option value="auto">Auto</option>
-          <option value="portrait">Portrait</option>
-          <option value="landscape">Landscape</option>
-        </select></div>
-      <div class="field"><label>Color</label><select id="color"></select></div>
-      <div class="field" id="duprow"><label>Two-sided</label>
-        <select id="duplex">
-          <option value="off">Off (one side)</option>
-          <option value="long">Long edge</option>
-          <option value="short">Short edge</option>
-        </select></div>
-      <div class="field"><label>Copies</label><input id="copies" type="number" min="1" max="99" value="1" inputmode="numeric"></div>
-      <div class="field"><label>Scaling</label><select id="scale"></select></div>
-    </div>
-    <div id="pctbox" class="row" hidden style="margin-bottom:6px">
-      <button id="pctm" type="button">−</button>
-      <input id="pct" type="number" min="10" max="400" step="5" value="100" inputmode="numeric" style="width:80px">
-      <span>%</span>
-      <button id="pctp" type="button">+</button>
-    </div>
-    <input id="pctr" type="range" min="10" max="300" step="5" value="100" hidden style="width:100%">
-    <p class="mut" id="scnote"></p>
-    <label class="row" style="margin-top:4px"><input type="checkbox" id="pnumon"> <span class="name">Add page numbers</span></label>
-    <p class="mut" id="numnote"></p>
-    <p class="mut" id="dnote"></p>
-  </aside>
-
-  <section class="dright">
-    <div class="dhead row">
-      <div class="grow">
-        <div class="name">Pages to print</div>
-        <div class="mut">The number badge is the print order. Click a page to select / unselect it.</div>
-      </div>
-      <span class="name" id="scount"></span>
-      <button id="sall" class="s">All</button><button id="snone" class="s">None</button>
-    </div>
-    <div class="grid" id="pgrid"></div>
+  <!-- step 2 stage -->
+  <section class="stage" id="v2" hidden>
+    <div id="pmsg" class="pill" hidden title="Click to dismiss"></div>
+    <div class="pvstage" id="pvstage"></div>
   </section>
 </div>
 
-<div id="pv" hidden>
-  <div class="pvtop row">
-    <button id="pvclose">✕ Close</button>
-    <div class="name">Print preview</div>
-    <span class="grow"></span>
-    <select id="pvscale"></select>
-    <span id="pvpct" class="row" style="gap:4px;flex-wrap:nowrap" hidden>
-      <button id="pvpm" type="button">−</button><span class="name" id="pvpv">100%</span><button id="pvpp" type="button">+</button>
-    </span>
-    <button id="pvprev">‹ Prev</button><span id="pvpos" class="name"></span><button id="pvnext">Next ›</button>
-    <button id="pvz" class="s" title="Ctrl + mouse wheel to zoom, Ctrl+0 to reset">100%</button>
-    <button id="pvprint" class="p">🖨 Print</button>
-  </div>
-  <div class="pvstage" id="pvstage"></div>
-  <div class="pvfoot">
-    <p class="mut">
-      <span class="lg" style="background:#cdd0d6;border:1px solid #888"></span>printer cannot print here &nbsp;
-      <span class="lg" style="background:#fff;border:2px dashed #2563eb"></span>printable area
-    </p>
-    <p class="mut" id="pvinfo"></p>
-  </div>
-</div>
 <div id="drop" hidden><div>⬇ Drop files here<br><span class="mut">PDF or images</span></div></div>
 <div id="toast" hidden></div>
 
 <script>
 const $=s=>document.querySelector(s);
-let FILES=[],REV=-1,CAPS=null,CUR=null;
+let FILES=[],REV=-1,CAPS=null,STEP=1;
+const DESEL=new Set();               // pages the user unticked: "fileId:pageIndex"
 const NUM={on:false,pos:'bottom',align:'center',size:12,start:1,bold:false,margin:8};
 const JH={'Content-Type':'application/json'};
 function el(t,props={},...kids){const e=document.createElement(t);Object.assign(e,props);kids.forEach(k=>e.append(k));return e}
 async function api(url,opt){return fetch(url,opt)}
 let tT=null;
 function toast(t){const b=$('#toast');b.textContent=t;b.hidden=false;clearTimeout(tT);tT=setTimeout(()=>b.hidden=true,4500)}
+const key=(f,p)=>f+':'+p;
+
+/* ---------------- page list helpers ---------------- */
+function allPages(){
+  const out=[];let n=0;
+  FILES.forEach(f=>{for(let i=0;i<f.pages;i++){n++;
+    out.push({f:f.id,p:i,n,land:f.lands[i],name:f.name,label:`${f.name}${f.pages>1?' · page '+(i+1):''}`})}});
+  return out;
+}
+const selPages=()=>allPages().filter(p=>!DESEL.has(key(p.f,p.p)));
+function updateCount(){
+  const a=allPages().length,s=selPages().length;
+  $('#scount').textContent=`${s} of ${a} selected`;
+}
+function jobTitle(list){
+  const names=[...new Set(list.map(p=>p.name))];
+  return names[0]+(names.length>1?' +'+(names.length-1):'');
+}
 
 /* ---------------- files + reader ---------------- */
 async function refresh(force){
   let j;try{j=await (await api('/api/state')).json()}catch{return}
   if(j.notice)toast(j.notice);
-  if(force||j.rev!==REV){REV=j.rev;FILES=j.files;renderFiles();renderPages()}
+  if(force||j.rev!==REV){
+    REV=j.rev;FILES=j.files;renderFiles();renderPages();
+    if(STEP===2){if(!FILES.length)go(1);else pvRefresh()}
+  }
 }
 async function pickFiles(){
   try{
@@ -258,13 +264,18 @@ async function pickFiles(){
 }
 $('#add').onclick=pickFiles;$('#add2').onclick=pickFiles;
 
+function printOnly(id){
+  DESEL.clear();
+  FILES.forEach(g=>{if(g.id!==id)for(let p=0;p<g.pages;p++)DESEL.add(key(g.id,p))});
+  renderPages();go(2);
+}
 function renderFiles(){
   const L=$('#flist');L.innerHTML='';
   $('#empty').hidden=FILES.length>0;
   FILES.forEach((f,i)=>{
     const meta=f.kind==='pdf'?`PDF · ${f.pages} page${f.pages>1?'s':''}`:'Image';
-    const pr=el('button',{className:'p s',textContent:'🖨 Print'});
-    pr.onclick=()=>openPrint(f.id);
+    const pr=el('button',{className:'s',textContent:'🖨 Only this',title:'Print only this file'});
+    pr.onclick=()=>printOnly(f.id);
     const up=el('button',{className:'s',textContent:'↑',disabled:i===0});
     up.onclick=async()=>{await api('/api/move',{method:'POST',headers:JH,body:JSON.stringify({id:f.id,dir:'up'})});refresh(true)};
     const dn=el('button',{className:'s',textContent:'↓',disabled:i===FILES.length-1});
@@ -284,40 +295,82 @@ function renderFiles(){
 function numQS(){
   return NUM.on?`&num=1&npos=${NUM.pos}&nalign=${NUM.align}&nsize=${NUM.size}&nstart=${NUM.start}&nmargin=${NUM.margin}&nbold=${NUM.bold?1:0}`:'';
 }
-let RZ=1,rzT=null,rzQ=1;
-const qFor=z=>{const need=300*z*(window.devicePixelRatio||1)/800;return need<=1?1:need<=1.5?1.5:need<=2?2:3};
+
+/* zoom: step 1 = page width, step 2 = preview sheet size */
+let RZ=1,rzT=null,rzQ=1,PZ=1,PW=720,pzT=null;
+const baseW=()=>Math.min(900,($('#pages').clientWidth||800)-24);
+const qFor=z=>{const need=baseW()*z*(window.devicePixelRatio||1)/800;return need<=1?1:need<=1.5?1.5:need<=2?2:3};
+function zoomLabel(){$('#rz').textContent=Math.round((STEP===1?RZ:PZ)*100)+'%'}
 function viewSrc(f,p){return `/api/view?f=${f}&p=${p}&q=${rzQ}${numQS()}&v=${REV}`}
 function reloadViews(){rzQ=qFor(RZ);document.querySelectorAll('#pages img').forEach(im=>{im.src=viewSrc(im.dataset.f,im.dataset.p)})}
 function setRZ(z){
   z=Math.max(.3,Math.min(3,Math.round(z*100)/100));
   const P=$('#pages'),span=P.scrollHeight-P.clientHeight;
   const ratio=span>0?P.scrollTop/span:0;
-  RZ=z;P.style.setProperty('--rz',z);$('#rz').textContent=Math.round(z*100)+'%';
+  RZ=z;P.style.setProperty('--rz',z);zoomLabel();
   const ns=P.scrollHeight-P.clientHeight;if(ns>0)P.scrollTop=ratio*ns;
   clearTimeout(rzT);rzT=setTimeout(()=>{if(qFor(RZ)!==rzQ)reloadViews()},400);
 }
-$('#rz').onclick=()=>setRZ(1);
+function setPZ(z){
+  PZ=Math.max(.4,Math.min(4,Math.round(z*100)/100));zoomLabel();
+  const w=pvSheetW()+'px';document.querySelectorAll('.pvsheet').forEach(x=>x.style.width=w);
+  clearTimeout(pzT);pzT=setTimeout(()=>{if(STEP===2&&pvNeedPw()!==PW)pvRender()},400);
+}
+const zoomBy=f=>STEP===1?setRZ(RZ*f):setPZ(PZ*f);
+const zoomReset=()=>STEP===1?setRZ(1):setPZ(1);
+$('#zin').onclick=()=>zoomBy(1.15);$('#zout').onclick=()=>zoomBy(1/1.15);$('#rz').onclick=zoomReset;
 $('#rfit').onclick=()=>{
-  const P=$('#pages');let z=3;
-  while(z>.3){setRZ(z);if(P.scrollHeight<=P.clientHeight+1)break;z=Math.round((z-.05)*100)/100}
-  P.scrollTop=0;
+  if(STEP===2)return setPZ(1);
+  const P=$('#pages'),im=P.querySelector('img');
+  const ratio=im&&im.naturalWidth?im.naturalHeight/im.naturalWidth:1.414;
+  setRZ((P.clientHeight-80)/(baseW()*ratio));
 };
 function renderPages(){
   const box=$('#pages');box.innerHTML='';rzQ=qFor(RZ);
-  let n=0;
-  FILES.forEach(f=>{for(let p=0;p<f.pages;p++){
-    n++;
-    const im=el('img',{loading:'lazy',alt:'',src:viewSrc(f.id,p)});im.dataset.f=f.id;im.dataset.p=p;
-    const t=`${f.name}`+(f.pages>1?` · page ${p+1}`:'');
-    box.append(el('div',{className:'rp'},el('b',{className:'badge',textContent:n}),im,el('div',{className:'cap',textContent:t,title:t})));
-  }});
+  allPages().forEach(p=>{
+    const k=key(p.f,p.p);
+    const cb=el('input',{type:'checkbox',checked:!DESEL.has(k)});
+    const im=el('img',{loading:'lazy',alt:'',src:viewSrc(p.f,p.p)});im.dataset.f=p.f;im.dataset.p=p.p;
+    const rp=el('div',{className:'rp'+(cb.checked?'':' off')},
+      el('div',{className:'ph'},el('b',{className:'badge',textContent:p.n}),
+        el('span',{className:'cap grow',textContent:p.label,title:p.label}),
+        el('label',{className:'sel'},cb,'Print')),
+      im);
+    cb.onchange=()=>{cb.checked?DESEL.delete(k):DESEL.add(k);rp.classList.toggle('off',!cb.checked);updateCount()};
+    box.append(rp);
+  });
+  updateCount();
 }
+$('#sall').onclick=()=>{DESEL.clear();renderPages()};
+$('#snone').onclick=()=>{allPages().forEach(p=>DESEL.add(key(p.f,p.p)));renderPages()};
+
+/* ---------------- steps ---------------- */
+function go(n){
+  if(n===2){
+    if(!FILES.length)return toast('Add a file first');
+    if(!selPages().length)return toast('Tick at least one page to print');
+  }
+  STEP=n;document.body.className='s'+n;
+  $('#v1').hidden=n!==1;$('#v2').hidden=n!==2;
+  $('#sideA').hidden=n!==1;$('#sideB').hidden=n!==2;
+  $('#stepname').textContent=n===1?'Step 1 of 2 · Check pages':'Step 2 of 2 · Preview & print';
+  zoomLabel();
+  if(n===2){msg('');numNote();if(!CAPS||CAPS.error)loadPrinters();else pvRender()}
+}
+$('#bopen').onclick=()=>go(2);
+$('#close').onclick=()=>go(1);
+$('#bside').onclick=()=>{
+  $('#main').classList.toggle('collapsed');
+  setTimeout(()=>{zoomBy(1)},300);
+};
+if(innerWidth<900)$('#main').classList.add('collapsed');
+let rsT=null;window.addEventListener('resize',()=>{clearTimeout(rsT);rsT=setTimeout(()=>zoomBy(1),250)});
 
 /* ---------------- drag & drop, paste ---------------- */
-function busy(){return !$('#dlg').hidden||!$('#pv').hidden}
+function busy(){return STEP===2}
 async function uploadFiles(list){
   const files=[...list];if(!files.length)return;
-  if(busy())return toast('Close the print window first');
+  if(busy())return toast('Go back to the pages first');
   const fd=new FormData();files.forEach(f=>fd.append('file',f,f.name));
   toast(`Adding ${files.length} file${files.length>1?'s':''}…`);
   try{
@@ -327,7 +380,7 @@ async function uploadFiles(list){
   refresh(true);
 }
 async function pasteClipboard(){
-  if(busy())return toast('Close the print window first');
+  if(busy())return toast('Go back to the pages first');
   try{
     const j=await (await api('/api/paste',{method:'POST'})).json();
     if(j.added)toast(`Added ${j.added} file${j.added>1?'s':''}`);
@@ -371,62 +424,38 @@ function numChanged(){
   NUM.margin=Math.max(2,Math.min(40,parseFloat($('#nummargin').value)||8));
   NUM.bold=$('#numbold').checked;
   api('/api/settings',{method:'POST',headers:JH,body:JSON.stringify({num:NUM})});
-  clearTimeout(numT);numT=setTimeout(renderPages,300);
+  numNote();
+  clearTimeout(numT);numT=setTimeout(()=>{renderPages();if(STEP===2)pvRefresh()},300);
 }
 ['#numon','#numpos','#numalign','#numsize','#numstart','#nummargin','#numbold'].forEach(id=>$(id).addEventListener('input',numChanged));
-$('#bnum').onclick=()=>{$('#numpanel').hidden=!$('#numpanel').hidden};
-
-/* ---------------- print dialog ---------------- */
-function msg(t){$('#pmsg').textContent=t}
+$('#bnum').onclick=e=>{e.stopPropagation();$('#numpanel').hidden=!$('#numpanel').hidden};
+document.addEventListener('click',e=>{if(!e.target.closest('.dd'))$('#numpanel').hidden=true});
 function numNote(){
   $('#pnumon').checked=NUM.on;
   $('#numnote').textContent=NUM.on
-    ?`${NUM.pos==='top'?'Top':'Bottom'}, ${NUM.align}, ${NUM.size} pt${NUM.bold?', bold':''}, ${NUM.margin} mm from the edge, starting at ${NUM.start}. Change them from the Page numbers button.`
+    ?`${NUM.pos==='top'?'Top':'Bottom'}, ${NUM.align}, ${NUM.size} pt${NUM.bold?', bold':''}, ${NUM.margin} mm from the edge, starting at ${NUM.start}. Change with the Page numbers button.`
     :'No page numbers will be printed.';
 }
-$('#pnumon').onchange=()=>{$('#numon').checked=$('#pnumon').checked;numChanged();numNote();if(!$('#pv').hidden)pvShow()};
-function openPrint(onlyId){
-  if(!FILES.length)return toast('Add a file first');
-  if(!$('#dlg').hidden)return;
-  const only=typeof onlyId==='string'?FILES.find(f=>f.id===onlyId):null;
-  const pages=[];let n=0;
-  FILES.forEach(f=>{for(let i=0;i<f.pages;i++){n++;
-    if(only&&f.id!==only.id)continue;
-    pages.push({f:f.id,p:i,n,land:f.lands[i],label:`${f.name}${f.pages>1?' (p'+(i+1)+')':''}`})}});
-  CUR={title:only?only.name:FILES[0].name+(FILES.length>1?' +'+(FILES.length-1):''),pages};
-  $('#ptitle').textContent=CUR.title;
-  const g=$('#pgrid');g.innerHTML='';
-  pages.forEach(p=>{
-    const cb=el('input',{type:'checkbox',checked:true});
-    const lb=el('label',{className:'pg on'},cb,el('b',{className:'badge',textContent:p.n}),
-      el('div',{className:'th'},el('img',{loading:'lazy',src:`/api/thumb?f=${p.f}&p=${p.p}`})),
-      el('span',{className:'lb',textContent:p.label,title:p.label}));
-    p.cb=cb;p.lb=lb;cb.onchange=syncSel;g.append(lb);
-  });
-  syncSel();
-  numNote();
-  msg('');$('#copies').value=1;$('#orient').value='auto';
-  $('#dlg').hidden=false;loadPrinters();
+$('#pnumon').onchange=()=>{$('#numon').checked=$('#pnumon').checked;numChanged()};
+
+/* ---------------- printer + settings ---------------- */
+function msg(t){
+  const b=$('#pmsg');b.textContent=t;b.hidden=!t;
+  b.className='pill'+(t.startsWith('✓')?' ok':/^Error/.test(t)?' err':'');
 }
-$('#bopen').onclick=()=>openPrint();
-$('#close').onclick=()=>{$('#dlg').hidden=true};
-function syncSel(){
-  if(!CUR)return;let n=0;
-  CUR.pages.forEach(p=>{const on=p.cb.checked;if(on)n++;p.lb.classList.toggle('on',on);p.lb.classList.toggle('off',!on)});
-  $('#scount').textContent=`${n} of ${CUR.pages.length} selected`;
-}
-$('#sall').onclick=()=>{if(CUR){CUR.pages.forEach(p=>p.cb.checked=true);syncSel()}};
-$('#snone').onclick=()=>{if(CUR){CUR.pages.forEach(p=>p.cb.checked=false);syncSel()}};
+$('#pmsg').onclick=()=>$('#pmsg').hidden=true;
 document.addEventListener('keydown',e=>{
-  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='p'){e.preventDefault();openPrint()}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='p'){e.preventDefault();if(STEP===1)go(2);else $('#bprint').click()}
   else if(e.key==='Escape'){
-    if(!$('#pv').hidden)$('#pvclose').click();else if(!$('#dlg').hidden)$('#close').click();
+    if(!$('#numpanel').hidden)$('#numpanel').hidden=true;else if(STEP===2)go(1);
   }
 });
 
 async function loadPrinters(){
   const s=$('#printer');s.innerHTML='';
-  const r=await api('/api/printers');const l=await r.json();
+  msg('Reading printers…');
+  let l;
+  try{l=await (await api('/api/printers')).json()}catch(e){msg('Error: '+e.message);return}
   if(!Array.isArray(l)||!l.length){msg('No printer found on this PC.');return}
   l.forEach(p=>s.append(new Option(`${p.name}  [${p.usb?'USB':p.port}]${p.default?' ★':''}`,p.name)));
   s.onchange=loadCaps;loadCaps();
@@ -448,9 +477,10 @@ async function loadCaps(){
   const dn={off:'one side',long:'two-sided long edge',short:'two-sided short edge'};
   $('#dnote').textContent=`Driver default: ${CAPS.defaults.paper||'?'}, ${CAPS.defaults.color?'Color':'B&W'}${CAPS.duplex?', '+dn[CAPS.defaults.duplex]:''}`;
   loadProfiles();
+  pvRender();
 }
 
-/* ---- profiles: the driver's own settings window opens, like Word's Printer Properties ---- */
+/* ---- profiles ---- */
 async function loadProfiles(selId){
   const S=$('#profile');S.innerHTML='';S.append(new Option('None (normal way)',''));
   try{
@@ -464,7 +494,7 @@ function profChange(){
   $('#bdel').hidden=!has;
   $('#duplex').disabled=has;
   $('#pnote').textContent=has
-    ?'This profile controls the driver options (two-sided, paper type, quality…). Paper size, orientation, color and copies still follow the settings below.'
+    ?'This profile controls the driver options (two-sided, paper type, quality…). Paper size, orientation, color and copies still follow the settings here.'
     :'';
 }
 $('#profile').onchange=profChange;
@@ -500,33 +530,25 @@ const SCN={fit:'Whole page fitted inside the printable area. Nothing is cut off.
   actual:'Real size. Anything outside the printer\'s printable area is cut off.',
   fill:'Page covers the whole printable area. The extra part is cropped.',
   custom:'Percent of the real size (100% = actual size), always centered. Anything outside the printable area is cut off.'};
-['#scale','#pvscale'].forEach(id=>SC.forEach(([v,t])=>$(id).append(new Option(t,v))));
+SC.forEach(([v,t])=>$('#scale').append(new Option(t,v)));
 function setScale(v){
-  $('#scale').value=v;$('#pvscale').value=v;$('#scnote').textContent=SCN[v];
+  $('#scale').value=v;$('#scnote').textContent=SCN[v];
   $('#pctbox').hidden=$('#pctr').hidden=v!=='custom';
-  $('#pvpct').hidden=v!=='custom';
 }
 function setPct(v){
   v=Math.max(10,Math.min(400,Math.round(parseFloat(v)||100)));
-  $('#pct').value=v;$('#pctr').value=Math.min(300,v);$('#pvpv').textContent=v+'%';return v;
+  $('#pct').value=v;$('#pctr').value=Math.min(300,v);return v;
 }
-let pctT=null;
-function pctChanged(){if(!$('#pv').hidden){clearTimeout(pctT);pctT=setTimeout(pvShow,350)}}
-$('#pct').oninput=()=>{if($('#pct').value!=='')pctChanged()};
-$('#pct').onchange=()=>{setPct($('#pct').value);pctChanged()};
-$('#pctr').oninput=()=>{setPct($('#pctr').value);pctChanged()};
-$('#pctm').onclick=()=>{setPct((parseFloat($('#pct').value)||100)-5);pctChanged()};
-$('#pctp').onclick=()=>{setPct((parseFloat($('#pct').value)||100)+5);pctChanged()};
+$('#pct').onchange=()=>setPct($('#pct').value);
+$('#pctr').oninput=()=>setPct($('#pctr').value);
+$('#pctm').onclick=()=>{setPct((parseFloat($('#pct').value)||100)-5);pvRefresh()};
+$('#pctp').onclick=()=>{setPct((parseFloat($('#pct').value)||100)+5);pvRefresh()};
 setScale('fit');
 $('#scale').onchange=()=>setScale($('#scale').value);
-$('#pvscale').onchange=()=>{setScale($('#pvscale').value);pvShow()};
-$('#pvpm').onclick=()=>{setPct((parseFloat($('#pct').value)||100)-5);pvShow()};
-$('#pvpp').onclick=()=>{setPct((parseFloat($('#pct').value)||100)+5);pvShow()};
 
-const sel=()=>CUR.pages.filter(p=>p.cb.checked);
 function orient(){
   const v=$('#orient').value;if(v!=='auto')return v;
-  const s=sel()[0];return s&&s.land?'landscape':'portrait';
+  const s=selPages()[0];return s&&s.land?'landscape':'portrait';
 }
 function params(){
   const pp=CAPS&&CAPS.papers?CAPS.papers.find(x=>x.name===$('#paper').value):null;
@@ -535,35 +557,41 @@ function params(){
     w:(pp&&pp.w)||210,h:(pp&&pp.h)||297}).toString()+numQS();
 }
 
-/* ---- preview ---- */
-let PV={list:[],i:0,step:1};
+/* ---------------- step 2: live preview, scrolls like a book ---------------- */
 const dupOn=()=>CAPS&&CAPS.duplex&&!$('#profile').value&&$('#duplex').value!=='off';
-$('#bprev').onclick=()=>{
-  const s=sel();if(!s.length)return toast('Select at least one page');
-  if(!CAPS||CAPS.error)return toast('Select a printer first');
-  PV={list:s,i:0,step:dupOn()?2:1,pw:720};
-  PZ=1;$('#pvz').textContent='100%';
-  $('#pv').hidden=false;pvShow();
-};
-async function pvShow(){
-  PV.pw=pvNeedPw();
-  const q=params()+'&pw='+PV.pw,stage=$('#pvstage');stage.innerHTML='';
-  const items=PV.list.slice(PV.i,PV.i+PV.step),n=PV.list.length;
-  let left=items.length;
-  $('#pvinfo').textContent='Loading preview…';
-  items.forEach((p,k)=>{
-    const im=el('img',{alt:''});
-    im.onload=im.onerror=()=>{if(--left===0)pvInfo(q)};
-    im.src=`/api/preview?f=${p.f}&p=${p.p}&${q}`;
-    const cap=PV.step===2?(k===0?'Front':'Back')+` · page ${PV.i+k+1}`:`Page ${PV.i+1} of ${n}`;
-    const sh=el('div',{className:'pvsheet'},im,el('small',{className:'mut',textContent:cap}));
-    sh.style.width=pvSheetW()+'px';
-    stage.append(sh);
-  });
-  const a=PV.i+1,b=PV.i+items.length;
-  $('#pvpos').textContent=(items.length>1?`${a}–${b}`:`${a}`)+` / ${n}`;
-  $('#pvprev').disabled=PV.i<=0;
-  $('#pvnext').disabled=PV.i+PV.step>=n;
+let pvT=null;
+function pvRefresh(){clearTimeout(pvT);pvT=setTimeout(pvRender,250)}
+// any change in the settings panel refreshes the preview
+['change','input'].forEach(ev=>$('#setp').addEventListener(ev,e=>{
+  if(STEP!==2||e.target.id==='printer'||e.target.id==='copies')return;
+  pvRefresh();
+}));
+function pvSheetW(){
+  const st=$('#pvstage'),sw=(st.clientWidth||600)-44,sh=(st.clientHeight||600)-70;
+  const ratio=orient()==='landscape'?0.707:1.414;
+  const per=dupOn()?(sw-14)/2:sw;
+  return Math.max(120,Math.min(per,sh/ratio))*PZ;
+}
+function pvNeedPw(){return Math.min(1800,Math.max(720,Math.ceil(pvSheetW()*(window.devicePixelRatio||1)/120)*120))}
+function pvRender(){
+  if(STEP!==2)return;
+  const stage=$('#pvstage');stage.innerHTML='';
+  if(!CAPS||CAPS.error)return;
+  const list=selPages();
+  if(!list.length){stage.append(el('div',{className:'empty mut',textContent:'No pages selected. Go back and tick the pages to print.'}));return}
+  PW=pvNeedPw();
+  const q=params()+'&pw='+PW,step=dupOn()?2:1,w=pvSheetW()+'px',n=list.length;
+  for(let i=0;i<n;i+=step){
+    const row=el('div',{className:'pvrow'});
+    list.slice(i,i+step).forEach((p,k)=>{
+      const im=el('img',{alt:'',loading:'lazy',src:`/api/preview?f=${p.f}&p=${p.p}&${q}`});
+      const cap=step===2?(k===0?'Front':'Back')+` · page ${i+k+1} of ${n}`:`Page ${i+1} of ${n}`;
+      const sh=el('div',{className:'pvsheet'},im,el('small',{className:'mut',textContent:cap}));
+      sh.style.width=w;row.append(sh);
+    });
+    stage.append(row);
+  }
+  pvInfo(q);
 }
 async function pvInfo(q){
   try{
@@ -573,81 +601,47 @@ async function pvInfo(q){
       (dupOn()?' Two-sided: front and back are shown together.':'');
   }catch{$('#pvinfo').textContent=''}
 }
-$('#pvprev').onclick=()=>{PV.i=Math.max(0,PV.i-PV.step);pvShow()};
-$('#pvnext').onclick=()=>{if(PV.i+PV.step<PV.list.length){PV.i+=PV.step;pvShow()}};
-$('#pvclose').onclick=()=>{$('#pv').hidden=true;$('#pvstage').innerHTML=''};
-let tx=null;
-$('#pvstage').addEventListener('touchstart',e=>{tx=e.touches[0].clientX},{passive:true});
-$('#pvstage').addEventListener('touchend',e=>{
-  if(tx===null)return;const dx=e.changedTouches[0].clientX-tx;tx=null;
-  if(dx<-50)$('#pvnext').click();else if(dx>50)$('#pvprev').click();
-},{passive:true});
 
-/* ---- preview zoom (Ctrl + wheel) and keyboard ---- */
-let PZ=1,pzT=null;
-function pvSheetW(){
-  const st=$('#pvstage'),sw=(st.clientWidth||600)-26,sh=(st.clientHeight||600)-48;
-  const ratio=orient()==='landscape'?0.707:1.414;
-  const per=PV.step===2?(sw-14)/2:sw;
-  return Math.max(120,Math.min(per,sh/ratio))*PZ;
-}
-$('#pvprint').onclick=()=>{$('#pvclose').click();$('#bprint').click()};
-let rsT=null;window.addEventListener('resize',()=>{clearTimeout(rsT);rsT=setTimeout(()=>{if(!$('#pv').hidden)pvShow()},250)});
-function pvNeedPw(){return Math.min(1800,Math.max(720,Math.ceil(pvSheetW()*(window.devicePixelRatio||1)/120)*120))}
-function setPZ(z){
-  PZ=Math.max(.6,Math.min(4,Math.round(z*100)/100));
-  $('#pvz').textContent=Math.round(PZ*100)+'%';
-  const w=pvSheetW()+'px';document.querySelectorAll('.pvsheet').forEach(x=>x.style.width=w);
-  clearTimeout(pzT);pzT=setTimeout(()=>{if(!$('#pv').hidden&&pvNeedPw()!==PV.pw)pvShow()},400);
-}
-$('#pvz').onclick=()=>setPZ(1);
-$('#pvscale').addEventListener('change',()=>$('#pvscale').blur());
+/* ---- zoom with Ctrl + wheel / keys ---- */
 window.addEventListener('wheel',e=>{
   if(!e.ctrlKey)return;
-  const f=e.deltaY<0?1.1:1/1.1;
-  if(!$('#pv').hidden){e.preventDefault();setPZ(PZ*f)}
-  else if($('#dlg').hidden){e.preventDefault();setRZ(RZ*f)}
+  e.preventDefault();zoomBy(e.deltaY<0?1.1:1/1.1);
 },{passive:false});
 document.addEventListener('keydown',e=>{
-  const pvOpen=!$('#pv').hidden,rdOpen=$('#dlg').hidden&&$('#pv').hidden;
-  if(e.ctrlKey&&(pvOpen||rdOpen)){
-    const zin=e.key==='+'||e.key==='=',zout=e.key==='-'||e.key==='_',zero=e.key==='0';
-    if(!(zin||zout||zero))return;
-    e.preventDefault();
-    if(pvOpen)setPZ(zero?1:PZ*(zin?1.1:1/1.1));else setRZ(zero?1:RZ*(zin?1.1:1/1.1));
-    return;
-  }
-  if(!pvOpen)return;
-  const t=e.target;
-  if(/^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName)&&t.type!=='checkbox')return;
-  const sc=$('#pv'),noScroll=sc.scrollHeight<=sc.clientHeight+2;
-  if(e.key==='ArrowRight'||e.key==='PageDown'||(noScroll&&e.key==='ArrowDown')){e.preventDefault();$('#pvnext').click()}
-  else if(e.key==='ArrowLeft'||e.key==='PageUp'||(noScroll&&e.key==='ArrowUp')){e.preventDefault();$('#pvprev').click()}
-  else if(e.key==='Home'){e.preventDefault();PV.i=0;pvShow()}
-  else if(e.key==='End'){e.preventDefault();PV.i=Math.floor((PV.list.length-1)/PV.step)*PV.step;pvShow()}
+  if(!e.ctrlKey)return;
+  const zin=e.key==='+'||e.key==='=',zout=e.key==='-'||e.key==='_',zero=e.key==='0';
+  if(!(zin||zout||zero))return;
+  e.preventDefault();
+  if(zero)zoomReset();else zoomBy(zin?1.1:1/1.1);
 });
 
-/* ---- print ---- */
+/* ---- print (status shows on this same page) ---- */
 $('#bprint').onclick=async()=>{
-  const s=sel();if(!s.length)return toast('Select at least one page');
+  const s=selPages();if(!s.length)return toast('Tick at least one page to print');
   if(!CAPS||CAPS.error)return toast('Select a printer first');
   const copies=Math.max(1,Math.min(99,parseInt($('#copies').value)||1));
   const body={printer:$('#printer').value,paper:$('#paper').value,color:$('#color').value,
     duplex:CAPS.duplex?$('#duplex').value:'off',orient:orient(),copies,
     profile:$('#profile').value||'',scale:$('#scale').value,pct:setPct($('#pct').value),
-    num:NUM,pages:s.map(p=>[p.f,p.p]),title:CUR.title};
+    num:NUM,pages:s.map(p=>[p.f,p.p]),title:jobTitle(s)};
+  $('#bprint').disabled=true;
   msg('Sending…');
-  const r=await api('/api/print',{method:'POST',headers:JH,body:JSON.stringify(body)});
-  const j=await r.json();if(!r.ok){msg('Error: '+j.error);return}
-  poll(j.id);
+  try{
+    const r=await api('/api/print',{method:'POST',headers:JH,body:JSON.stringify(body)});
+    const j=await r.json();
+    if(!r.ok){msg('Error: '+j.error);$('#bprint').disabled=false;return}
+    poll(j.id);
+  }catch(e){msg('Error: '+e.message);$('#bprint').disabled=false}
 };
 async function poll(id){
-  const r=await api('/api/job/'+id);const j=await r.json();
+  let j;
+  try{j=await (await api('/api/job/'+id)).json()}catch(e){msg('Error: '+e.message);$('#bprint').disabled=false;return}
   if(j.state==='run'){msg(`Printing ${j.done}/${j.total}…`);setTimeout(()=>poll(id),700)}
-  else if(j.state==='done')msg('✓ Sent to printer');
-  else msg('Error: '+j.error);
+  else if(j.state==='done'){msg('✓ Sent to printer');$('#bprint').disabled=false}
+  else{msg('Error: '+j.error);$('#bprint').disabled=false}
 }
 
+/* ---------------- start with windows ---------------- */
 async function initAuto(){
   try{
     const j=await (await api('/api/autostart')).json();
@@ -663,7 +657,7 @@ $('#auto').onchange=async()=>{
     if(!r.ok){$('#auto').checked=!on;toast(j.error||'Could not change it')}
   }catch{$('#auto').checked=!on;toast('Could not change it')}
 };
-(async()=>{initAuto();await loadSettings();await refresh(true);setInterval(refresh,1200)})();
+(async()=>{initAuto();await loadSettings();numNote();await refresh(true);setInterval(refresh,1200)})();
 </script>
 </body>
 </html>
