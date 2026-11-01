@@ -7,13 +7,32 @@ logging.getLogger("werkzeug").setLevel(logging.ERROR)
 from werkzeug.serving import make_server
 import server
 
-PORT = 47615   # fixed local port: the first window listens here, later launches hand their files to it
+MUTEX = None   # keeps the "one window only" lock alive
 EXTS = (".pdf", ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif", ".tif", ".tiff")
 win = None
 
 
 def argv_paths():
     return [os.path.abspath(a) for a in sys.argv[1:] if not a.startswith("--") and os.path.isfile(a)]
+
+
+def port_file():
+    return os.path.join(server.CFG_DIR, "port.txt")
+
+
+def is_primary():
+    """True for the first launch. Later launches (Windows starts one process per file)
+    hand their files to the first window. Uses a Windows mutex, which is reliable
+    (two programs can share a TCP port on Windows, so the port is not used for this)."""
+    global MUTEX
+    try:
+        import ctypes
+        k = ctypes.WinDLL("kernel32", use_last_error=True)
+        k.CreateMutexW.restype = ctypes.c_void_p
+        MUTEX = k.CreateMutexW(None, False, "Local\\PCPrintSingleWindow")
+        return ctypes.get_last_error() != 183   # 183 = already exists
+    except Exception:
+        return True
 
 
 def ping(port):
@@ -24,11 +43,38 @@ def ping(port):
         return False
 
 
-def forward(port, paths):
-    req = urllib.request.Request(f"http://127.0.0.1:{port}/api/add",
-                                 data=json.dumps({"paths": paths}).encode(),
-                                 headers={"Content-Type": "application/json"})
-    urllib.request.urlopen(req, timeout=5).read()
+def forward(paths):
+    """Send files to the window that is already open (waits until it is ready)."""
+    for _ in range(60):
+        try:
+            with open(port_file()) as fh:
+                port = int(fh.read().strip())
+            if ping(port):
+                req = urllib.request.Request(f"http://127.0.0.1:{port}/api/add",
+                                             data=json.dumps({"paths": paths}).encode(),
+                                             headers={"Content-Type": "application/json"})
+                urllib.request.urlopen(req, timeout=5).read()
+                return True
+        except Exception:
+            pass
+        time.sleep(0.5)
+    return False
+
+
+def make_send_to():
+    """'Send to > PC Print' for many files at once (Windows then starts the app one time)."""
+    try:
+        import win32com.client
+        folder = os.path.join(os.environ["APPDATA"], "Microsoft", "Windows", "SendTo")
+        lnk = os.path.join(folder, "PC Print.lnk")
+        if os.path.exists(lnk):
+            return
+        sc = win32com.client.Dispatch("WScript.Shell").CreateShortCut(lnk)
+        sc.TargetPath = sys.executable
+        sc.WorkingDirectory = os.path.dirname(sys.executable)
+        sc.save()
+    except Exception:
+        pass
 
 
 def register_open_with():
@@ -70,6 +116,10 @@ def unregister_open_with():
         except Exception:
             pass
 
+    try:
+        os.remove(os.path.join(os.environ["APPDATA"], "Microsoft", "Windows", "SendTo", "PC Print.lnk"))
+    except Exception:
+        pass
     kill(r"Software\Classes\Applications" + "\\" + name)
     for ext in EXTS:
         kill(r"Software\Classes" + "\\" + ext + r"\OpenWithList" + "\\" + name)
@@ -81,20 +131,18 @@ def main():
         return
     paths = argv_paths()
 
-    srv, port = None, PORT
+    if not is_primary():
+        forward(paths)
+        return
+
+    srv = make_server("127.0.0.1", 0, server.app, threaded=True)   # free port, only this PC
+    port = srv.server_port
     try:
-        srv = make_server("127.0.0.1", PORT, server.app, threaded=True)
-    except OSError:
-        for _ in range(8):  # the first window may still be starting
-            if ping(PORT):
-                try:
-                    forward(PORT, paths)
-                except Exception:
-                    pass
-                return
-            time.sleep(0.4)
-        srv = make_server("127.0.0.1", 0, server.app, threaded=True)  # port taken by something else
-        port = srv.server_port
+        os.makedirs(server.CFG_DIR, exist_ok=True)
+        with open(port_file(), "w") as fh:
+            fh.write(str(port))
+    except Exception:
+        pass
     threading.Thread(target=srv.serve_forever, daemon=True).start()
 
     if getattr(sys, "frozen", False):
@@ -102,6 +150,7 @@ def main():
             register_open_with()
         except Exception:
             pass
+        make_send_to()
     if paths:
         server.register(paths, sort=True)
 
