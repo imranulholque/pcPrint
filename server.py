@@ -1,7 +1,7 @@
-import os, sys, io, re, uuid, time, json, threading, functools
+import os, sys, io, re, uuid, time, json, shutil, tempfile, threading, functools
 from flask import Flask, request, jsonify, send_file
 import fitz
-from PIL import Image, ImageOps, ImageDraw, ImageFont
+from PIL import Image, ImageOps, ImageDraw, ImageFont, ImageGrab
 import printing
 
 
@@ -30,8 +30,18 @@ PLOCK = threading.Lock()
 DIALOG_LOCK = threading.Lock()
 
 
+_UP = {"dir": None, "n": 0}   # temp folder for dropped / pasted files
+
+
+def upload_dir():
+    if not _UP["dir"] or not os.path.isdir(_UP["dir"]):
+        _UP["dir"] = tempfile.mkdtemp(prefix="pcprint_")
+    return _UP["dir"]
+
+
 def cleanup():
-    pass
+    if _UP["dir"]:
+        shutil.rmtree(_UP["dir"], ignore_errors=True)
 
 
 @app.before_request
@@ -153,6 +163,57 @@ def pick():
         return jsonify(error=str(e)), 500
     added, errors = register(paths or [], sort=False)
     return jsonify(added=added, errors=errors)
+
+
+def save_upload(up):
+    """Save one dropped/pasted file into the temp folder, keeping its real name."""
+    name = os.path.basename((up.filename or "").replace("\\", "/")).strip()
+    name = re.sub(r'[<>:"/\\|?*]', "_", name)
+    ext = os.path.splitext(name)[1].lower()
+    mt = (up.mimetype or "").lower()
+    generic = name.lower() in ("", "image.png", "image.jpg", "image.jpeg", "blob")
+    if generic or not ext:
+        e = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp", "image/gif": ".gif",
+             "image/bmp": ".bmp", "application/pdf": ".pdf"}.get(mt)
+        if e:   # a pasted picture (screenshot) has no real name
+            _UP["n"] += 1
+            name = f"Pasted image {_UP['n']}{e}" if e != ".pdf" else f"Pasted file {_UP['n']}.pdf"
+    d = os.path.join(upload_dir(), uuid.uuid4().hex[:8])
+    os.makedirs(d, exist_ok=True)
+    path = os.path.join(d, name or "file")
+    up.save(path)
+    return path
+
+
+@app.post("/api/upload")
+def upload():
+    """Files dropped on the window or pasted with Ctrl+V."""
+    paths = [save_upload(u) for u in request.files.getlist("file")]
+    if not paths:
+        return jsonify(added=0, errors=["No file received"])
+    added, errors = register(paths, sort=True)
+    return jsonify(added=added, errors=errors)
+
+
+@app.post("/api/paste")
+def paste():
+    """Ctrl+V fallback: read the Windows clipboard (copied files, or a copied picture)."""
+    try:
+        data = ImageGrab.grabclipboard()
+    except Exception as e:
+        return jsonify(added=0, errors=[f"Cannot read the clipboard: {e}"])
+    if isinstance(data, list):   # files copied in Explorer
+        added, errors = register([p for p in data if os.path.isfile(p)], sort=True)
+        return jsonify(added=added, errors=errors)
+    if data is not None:         # a copied picture
+        _UP["n"] += 1
+        d = os.path.join(upload_dir(), uuid.uuid4().hex[:8])
+        os.makedirs(d, exist_ok=True)
+        path = os.path.join(d, f"Pasted image {_UP['n']}.png")
+        data.convert("RGB").save(path)
+        added, errors = register([path], sort=True)
+        return jsonify(added=added, errors=errors)
+    return jsonify(added=0, errors=["The clipboard has no file or picture"])
 
 
 @app.get("/api/state")
