@@ -51,13 +51,13 @@ select:disabled{opacity:.5}
   <button id="add" class="p">＋ Add files</button>
   <button id="bnum">🔢 Page numbers</button>
   <span class="grow"></span>
-  <button id="bopen" class="p">🖨 Print (Ctrl+P)</button>
+  <button id="bopen" class="p">🖨 Print all (Ctrl+P)</button>
 </div></div>
 
 <div class="wrap">
   <div id="numpanel" class="card" hidden>
     <label class="row"><input type="checkbox" id="numon"> <span class="name">Add page numbers to all pages</span></label>
-    <p class="mut">Pages of all files are counted as one document (1, 2, 3…). Font: Times New Roman.</p>
+    <p class="mut">The number is printed directly on the page, in Times New Roman. All files count as one document (1, 2, 3…), so printing one file keeps its own serial numbers.</p>
     <div class="two">
       <div class="field"><label>Position</label>
         <select id="numpos"><option value="bottom">Bottom</option><option value="top">Top</option></select></div>
@@ -67,6 +67,10 @@ select:disabled{opacity:.5}
         <input id="numsize" type="number" min="6" max="72" step="1" value="12"></div>
       <div class="field"><label>Start at</label>
         <input id="numstart" type="number" min="1" step="1" value="1"></div>
+      <div class="field"><label>Distance from the page edge (mm)</label>
+        <input id="nummargin" type="number" min="2" max="40" step="1" value="8"></div>
+      <div class="field"><label>Style</label>
+        <label class="row"><input type="checkbox" id="numbold"> <b>Bold</b></label></div>
     </div>
   </div>
 
@@ -119,7 +123,8 @@ select:disabled{opacity:.5}
         </div>
         <input id="pctr" type="range" min="10" max="300" step="5" value="100" hidden>
         <p class="mut" id="scnote"></p></div>
-      <p class="mut" id="numnote"></p>
+      <div class="field"><label class="row"><input type="checkbox" id="pnumon"> <span class="name">Add page numbers</span></label>
+        <p class="mut" id="numnote"></p></div>
       <p class="mut" id="dnote"></p>
       <div class="row">
         <button id="bprev" class="grow">👁 Preview</button>
@@ -154,7 +159,7 @@ select:disabled{opacity:.5}
 <script>
 const $=s=>document.querySelector(s);
 let FILES=[],REV=-1,CAPS=null,CUR=null;
-const NUM={on:false,pos:'bottom',align:'center',size:12,start:1};
+const NUM={on:false,pos:'bottom',align:'center',size:12,start:1,bold:false,margin:8};
 const JH={'Content-Type':'application/json'};
 function el(t,props={},...kids){const e=document.createElement(t);Object.assign(e,props);kids.forEach(k=>e.append(k));return e}
 async function api(url,opt){return fetch(url,opt)}
@@ -181,6 +186,8 @@ function renderFiles(){
   $('#empty').hidden=FILES.length>0;
   FILES.forEach((f,i)=>{
     const meta=f.kind==='pdf'?`PDF · ${f.pages} page${f.pages>1?'s':''}`:'Image';
+    const pr=el('button',{className:'p s',textContent:'🖨 Print'});
+    pr.onclick=()=>openPrint(f.id);
     const up=el('button',{className:'s',textContent:'↑',disabled:i===0});
     up.onclick=async()=>{await api('/api/move',{method:'POST',headers:JH,body:JSON.stringify({id:f.id,dir:'up'})});refresh(true)};
     const dn=el('button',{className:'s',textContent:'↓',disabled:i===FILES.length-1});
@@ -188,7 +195,7 @@ function renderFiles(){
     const x=el('button',{className:'x',textContent:'✕'});
     x.onclick=async()=>{await api('/api/files/'+f.id,{method:'DELETE'});refresh(true)};
     L.append(el('div',{className:'card'},el('div',{className:'row'},
-      el('div',{className:'grow'},el('div',{className:'name',textContent:f.name}),el('div',{className:'mut',textContent:meta})),up,dn,x)));
+      el('div',{className:'grow'},el('div',{className:'name',textContent:f.name}),el('div',{className:'mut',textContent:meta})),pr,up,dn,x)));
   });
   if(FILES.length>1){
     const c=el('button',{className:'x',textContent:'Remove all files'});
@@ -197,7 +204,7 @@ function renderFiles(){
   }
 }
 function numQS(){
-  return NUM.on?`&num=1&npos=${NUM.pos}&nalign=${NUM.align}&nsize=${NUM.size}&nstart=${NUM.start}`:'';
+  return NUM.on?`&num=1&npos=${NUM.pos}&nalign=${NUM.align}&nsize=${NUM.size}&nstart=${NUM.start}&nmargin=${NUM.margin}&nbold=${NUM.bold?1:0}`:'';
 }
 function renderPages(){
   const box=$('#pages');box.innerHTML='';
@@ -216,27 +223,39 @@ async function loadSettings(){
   }catch{}
   $('#numon').checked=NUM.on;$('#numpos').value=NUM.pos;$('#numalign').value=NUM.align;
   $('#numsize').value=NUM.size;$('#numstart').value=NUM.start;
+  $('#nummargin').value=NUM.margin;$('#numbold').checked=NUM.bold;
 }
 let numT=null;
 function numChanged(){
   NUM.on=$('#numon').checked;NUM.pos=$('#numpos').value;NUM.align=$('#numalign').value;
   NUM.size=Math.max(6,Math.min(72,parseFloat($('#numsize').value)||12));
   NUM.start=Math.max(1,parseInt($('#numstart').value)||1);
+  NUM.margin=Math.max(2,Math.min(40,parseFloat($('#nummargin').value)||8));
+  NUM.bold=$('#numbold').checked;
   api('/api/settings',{method:'POST',headers:JH,body:JSON.stringify({num:NUM})});
   clearTimeout(numT);numT=setTimeout(renderPages,300);
 }
-['#numon','#numpos','#numalign','#numsize','#numstart'].forEach(id=>$(id).addEventListener('input',numChanged));
+['#numon','#numpos','#numalign','#numsize','#numstart','#nummargin','#numbold'].forEach(id=>$(id).addEventListener('input',numChanged));
 $('#bnum').onclick=()=>{$('#numpanel').hidden=!$('#numpanel').hidden};
 
 /* ---------------- print dialog ---------------- */
 function msg(t){$('#pmsg').textContent=t}
-function openPrint(){
+function numNote(){
+  $('#pnumon').checked=NUM.on;
+  $('#numnote').textContent=NUM.on
+    ?`${NUM.pos==='top'?'Top':'Bottom'}, ${NUM.align}, ${NUM.size} pt${NUM.bold?', bold':''}, ${NUM.margin} mm from the edge, starting at ${NUM.start}. Change them from the Page numbers button.`
+    :'No page numbers will be printed.';
+}
+$('#pnumon').onchange=()=>{$('#numon').checked=$('#pnumon').checked;numChanged();numNote();if(!$('#pv').hidden)pvShow()};
+function openPrint(onlyId){
   if(!FILES.length)return toast('Add a file first');
   if(!$('#dlg').hidden)return;
+  const only=typeof onlyId==='string'?FILES.find(f=>f.id===onlyId):null;
   const pages=[];let n=0;
   FILES.forEach(f=>{for(let i=0;i<f.pages;i++){n++;
+    if(only&&f.id!==only.id)continue;
     pages.push({f:f.id,p:i,land:f.lands[i],label:`${n}. ${f.name}${f.pages>1?' (p'+(i+1)+')':''}`})}});
-  CUR={title:FILES[0].name+(FILES.length>1?' +'+(FILES.length-1):''),pages};
+  CUR={title:only?only.name:FILES[0].name+(FILES.length>1?' +'+(FILES.length-1):''),pages};
   $('#ptitle').textContent=CUR.title;
   const g=$('#pgrid');g.innerHTML='';
   pages.forEach(p=>{
@@ -244,11 +263,11 @@ function openPrint(){
       el('img',{loading:'lazy',src:`/api/thumb?f=${p.f}&p=${p.p}`}),el('span',{textContent:p.label}));
     p.cb=lb.firstChild;g.append(lb);
   });
-  $('#numnote').textContent=NUM.on?`Page numbers: on (${NUM.pos}, ${NUM.align}, ${NUM.size} pt, start at ${NUM.start})`:'Page numbers: off';
+  numNote();
   msg('');$('#copies').value=1;$('#orient').value='auto';
   $('#dlg').hidden=false;loadPrinters();
 }
-$('#bopen').onclick=openPrint;
+$('#bopen').onclick=()=>openPrint();
 $('#close').onclick=()=>{$('#dlg').hidden=true};
 $('#sall').onclick=()=>CUR&&CUR.pages.forEach(p=>p.cb.checked=true);
 $('#snone').onclick=()=>CUR&&CUR.pages.forEach(p=>p.cb.checked=false);
