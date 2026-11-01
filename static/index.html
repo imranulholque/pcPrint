@@ -27,7 +27,8 @@ h1{font-size:18px;margin:0 8px 0 0}
 .empty .big{font-size:20px;font-weight:600;margin-bottom:6px}
 .empty button{font-size:17px;padding:14px 26px;margin-top:14px}
 .rp{margin:14px 0;text-align:center}
-.rp img{width:100%;display:block;border-radius:3px;box-shadow:0 2px 12px rgba(0,0,0,.35);background:#fff;min-height:160px}
+#pages{overflow-x:auto}
+.rp img{width:calc(var(--rz,1)*100%);margin:0 auto;display:block;border-radius:3px;box-shadow:0 2px 12px rgba(0,0,0,.35);background:#fff;min-height:160px}
 .rp .mut{margin-top:4px}
 .field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
 .field select,.field input{width:100%}
@@ -37,8 +38,8 @@ h1{font-size:18px;margin:0 8px 0 0}
 #dlg,#pv{position:fixed;inset:0;background:var(--bg);overflow:auto;z-index:10}
 #pv{z-index:11}
 select:disabled{opacity:.5}
-.pvstage{display:flex;gap:10px;justify-content:center;align-items:flex-start;margin:10px 0}
-.pvsheet{flex:1;min-width:0;max-width:420px;text-align:center}
+.pvstage{display:flex;gap:10px;justify-content:safe center;align-items:flex-start;margin:10px 0;overflow-x:auto}
+.pvsheet{flex:0 0 auto;text-align:center}
 .pvsheet img{width:100%;display:block;border-radius:4px;box-shadow:0 2px 12px rgba(0,0,0,.35);background:#fff;min-height:120px}
 .lg{display:inline-block;width:12px;height:12px;vertical-align:-1px;margin-right:4px;border-radius:2px}
 #drop{position:fixed;inset:0;z-index:40;background:rgba(37,99,235,.18);display:flex;align-items:center;justify-content:center;pointer-events:none}
@@ -53,6 +54,7 @@ select:disabled{opacity:.5}
   <button id="add" class="p">＋ Add files</button>
   <button id="bpaste" title="Paste copied files or a copied picture (Ctrl+V)">📋 Paste</button>
   <button id="bnum">🔢 Page numbers</button>
+  <button id="rz" class="s" title="Ctrl + mouse wheel to zoom, Ctrl+0 to reset">100%</button>
   <span class="grow"></span>
   <label id="autolbl" class="row mut" hidden title="Open PC Print minimized when Windows starts"><input type="checkbox" id="auto"> Start with Windows</label>
   <button id="bopen" class="p">🖨 Print all (Ctrl+P)</button>
@@ -150,6 +152,7 @@ select:disabled{opacity:.5}
     <div class="pvstage" id="pvstage"></div>
     <div class="row" style="justify-content:center">
       <button id="pvprev">‹ Prev</button><span id="pvpos" class="name"></span><button id="pvnext">Next ›</button>
+      <button id="pvz" class="s" title="Ctrl + mouse wheel to zoom, Ctrl+0 to reset">100%</button>
     </div>
     <p class="mut" style="text-align:center">
       <span class="lg" style="background:#cdd0d6;border:1px solid #888"></span>printer cannot print here &nbsp;
@@ -211,11 +214,24 @@ function renderFiles(){
 function numQS(){
   return NUM.on?`&num=1&npos=${NUM.pos}&nalign=${NUM.align}&nsize=${NUM.size}&nstart=${NUM.start}&nmargin=${NUM.margin}&nbold=${NUM.bold?1:0}`:'';
 }
+let RZ=1,rzT=null,rzQ=1;
+const qFor=z=>z<=1?1:z<=1.5?1.5:z<=2.2?2:3;
+function viewSrc(f,p){return `/api/view?f=${f}&p=${p}&q=${rzQ}${numQS()}&v=${REV}`}
+function reloadViews(){rzQ=qFor(RZ);document.querySelectorAll('#pages img').forEach(im=>{im.src=viewSrc(im.dataset.f,im.dataset.p)})}
+function setRZ(z){
+  z=Math.max(.5,Math.min(4,Math.round(z*100)/100));
+  const h=document.documentElement,span=h.scrollHeight-h.clientHeight;
+  const ratio=span>0?window.scrollY/span:0;
+  RZ=z;$('#pages').style.setProperty('--rz',z);$('#rz').textContent=Math.round(z*100)+'%';
+  const ns=h.scrollHeight-h.clientHeight;if(ns>0)window.scrollTo(window.scrollX,ratio*ns);
+  clearTimeout(rzT);rzT=setTimeout(()=>{if(qFor(RZ)!==rzQ)reloadViews()},400);
+}
+$('#rz').onclick=()=>setRZ(1);
 function renderPages(){
-  const box=$('#pages');box.innerHTML='';
+  const box=$('#pages');box.innerHTML='';rzQ=qFor(RZ);
   FILES.forEach(f=>{for(let p=0;p<f.pages;p++){
     box.append(el('div',{className:'rp'},
-      el('img',{loading:'lazy',alt:'',src:`/api/view?f=${f.id}&p=${p}${numQS()}&v=${REV}`}),
+      (()=>{const im=el('img',{loading:'lazy',alt:'',src:viewSrc(f.id,p)});im.dataset.f=f.id;im.dataset.p=p;return im})(),
       el('div',{className:'mut',textContent:f.name+(f.pages>1?` · page ${p+1}`:'')})));
   }});
 }
@@ -440,11 +456,13 @@ const dupOn=()=>CAPS&&CAPS.duplex&&!$('#profile').value&&$('#duplex').value!=='o
 $('#bprev').onclick=()=>{
   const s=sel();if(!s.length)return toast('Select at least one page');
   if(!CAPS||CAPS.error)return toast('Select a printer first');
-  PV={list:s,i:0,step:dupOn()?2:1};
+  PV={list:s,i:0,step:dupOn()?2:1,pw:720};
+  PZ=1;$('#pvz').textContent='100%';
   $('#pv').hidden=false;pvShow();
 };
 async function pvShow(){
-  const q=params(),stage=$('#pvstage');stage.innerHTML='';
+  PV.pw=pvNeedPw();
+  const q=params()+'&pw='+PV.pw,stage=$('#pvstage');stage.innerHTML='';
   const items=PV.list.slice(PV.i,PV.i+PV.step),n=PV.list.length;
   let left=items.length;
   $('#pvinfo').textContent='Loading preview…';
@@ -453,7 +471,9 @@ async function pvShow(){
     im.onload=im.onerror=()=>{if(--left===0)pvInfo(q)};
     im.src=`/api/preview?f=${p.f}&p=${p.p}&${q}`;
     const cap=PV.step===2?(k===0?'Front':'Back')+` · page ${PV.i+k+1}`:`Page ${PV.i+1} of ${n}`;
-    stage.append(el('div',{className:'pvsheet'},im,el('small',{className:'mut',textContent:cap})));
+    const sh=el('div',{className:'pvsheet'},im,el('small',{className:'mut',textContent:cap}));
+    sh.style.width=pvSheetW()+'px';
+    stage.append(sh);
   });
   const a=PV.i+1,b=PV.i+items.length;
   $('#pvpos').textContent=(items.length>1?`${a}–${b}`:`${a}`)+` / ${n}`;
@@ -477,6 +497,47 @@ $('#pvstage').addEventListener('touchend',e=>{
   if(tx===null)return;const dx=e.changedTouches[0].clientX-tx;tx=null;
   if(dx<-50)$('#pvnext').click();else if(dx>50)$('#pvprev').click();
 },{passive:true});
+
+/* ---- preview zoom (Ctrl + wheel) and keyboard ---- */
+let PZ=1,pzT=null;
+function pvSheetW(){
+  const sw=$('#pvstage').clientWidth||600;
+  const base=PV.step===2?(sw-10)/2:Math.min(420,sw);
+  return base*PZ;
+}
+function pvNeedPw(){return Math.min(1800,Math.max(720,Math.ceil(pvSheetW()*(window.devicePixelRatio||1)/120)*120))}
+function setPZ(z){
+  PZ=Math.max(.6,Math.min(4,Math.round(z*100)/100));
+  $('#pvz').textContent=Math.round(PZ*100)+'%';
+  const w=pvSheetW()+'px';document.querySelectorAll('.pvsheet').forEach(x=>x.style.width=w);
+  clearTimeout(pzT);pzT=setTimeout(()=>{if(!$('#pv').hidden&&pvNeedPw()!==PV.pw)pvShow()},400);
+}
+$('#pvz').onclick=()=>setPZ(1);
+$('#pvscale').addEventListener('change',()=>$('#pvscale').blur());
+window.addEventListener('wheel',e=>{
+  if(!e.ctrlKey)return;
+  const f=e.deltaY<0?1.1:1/1.1;
+  if(!$('#pv').hidden){e.preventDefault();setPZ(PZ*f)}
+  else if($('#dlg').hidden){e.preventDefault();setRZ(RZ*f)}
+},{passive:false});
+document.addEventListener('keydown',e=>{
+  const pvOpen=!$('#pv').hidden,rdOpen=$('#dlg').hidden&&$('#pv').hidden;
+  if(e.ctrlKey&&(pvOpen||rdOpen)){
+    const zin=e.key==='+'||e.key==='=',zout=e.key==='-'||e.key==='_',zero=e.key==='0';
+    if(!(zin||zout||zero))return;
+    e.preventDefault();
+    if(pvOpen)setPZ(zero?1:PZ*(zin?1.1:1/1.1));else setRZ(zero?1:RZ*(zin?1.1:1/1.1));
+    return;
+  }
+  if(!pvOpen)return;
+  const t=e.target;
+  if(/^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName)&&t.type!=='checkbox')return;
+  const sc=$('#pv'),noScroll=sc.scrollHeight<=sc.clientHeight+2;
+  if(e.key==='ArrowRight'||e.key==='PageDown'||(noScroll&&e.key==='ArrowDown')){e.preventDefault();$('#pvnext').click()}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'||(noScroll&&e.key==='ArrowUp')){e.preventDefault();$('#pvprev').click()}
+  else if(e.key==='Home'){e.preventDefault();PV.i=0;pvShow()}
+  else if(e.key==='End'){e.preventDefault();PV.i=Math.floor((PV.list.length-1)/PV.step)*PV.step;pvShow()}
+});
 
 /* ---- print ---- */
 $('#bprint').onclick=async()=>{
