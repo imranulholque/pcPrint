@@ -510,7 +510,11 @@ def view():
                 doc.close()
     else:  # an image is shown on an A4 sheet
         wmm, hmm = (297.0, 210.0) if f["lands"][0] else (210.0, 297.0)
-    W = 1000 if wmm > hmm else 800
+    try:
+        zq = max(1.0, min(3.0, float(request.args.get("q", 1))))   # sharper picture when zoomed in
+    except Exception:
+        zq = 1.0
+    W = int((1000 if wmm > hmm else 800) * zq)
     ppmm = W / wmm
     H = max(100, int(hmm * ppmm))
     num = numspec(request.args, f["id"], p)
@@ -532,7 +536,10 @@ def preview():
     mode = request.args.get("scale", "fit")
     if mode not in SCALES:
         mode = "fit"
-    W = 720
+    try:
+        W = int(max(480.0, min(1800.0, float(request.args.get("pw", 720)))))   # sharper when zoomed in
+    except Exception:
+        W = 720
     s = W / a["pw"]  # pixels per mm on the preview sheet
     H = max(100, int(a["ph"] * s))
     ox, oy = int(a["ox"] * s), int(a["oy"] * s)
